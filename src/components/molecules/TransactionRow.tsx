@@ -1,0 +1,105 @@
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, radius, spacing, typography } from '@/theme';
+
+interface TransactionRowProps {
+  /** Título de la fila (categoría, o la nota en el detalle de categoría). */
+  category: string;
+  /** Color del cuadro a la izquierda; si se omite, no se muestra el cuadro. */
+  color?: string;
+  /** Subtítulo (fecha · nota o cuenta). */
+  subtitle: string;
+  /** Importe ya formateado con signo (p. ej. "−248.400"). */
+  amount: string;
+  /** Si el importe es un ingreso (positivo), para colorearlo en verde. */
+  income?: boolean;
+  /** Acción al pulsar (abre el detalle). */
+  onPress?: () => void;
+  /** Dibuja una línea separadora inferior. */
+  showSeparator?: boolean;
+}
+
+/**
+ * Fila de un movimiento: cuadro de color de la categoría, categoría con su
+ * subtítulo y el importe a la derecha (verde si es ingreso, rojo si es egreso).
+ */
+export function TransactionRow({
+  category,
+  color,
+  subtitle,
+  amount,
+  income = false,
+  onPress,
+  showSeparator = false,
+}: TransactionRowProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => [
+        styles.row,
+        showSeparator && styles.separator,
+        pressed && onPress ? styles.pressed : undefined,
+      ]}
+    >
+      {color !== undefined && (
+        <View style={[styles.swatch, { backgroundColor: color }]} />
+      )}
+      <View style={styles.info}>
+        <Text style={styles.category} numberOfLines={1}>
+          {category}
+        </Text>
+        <Text style={styles.subtitle} numberOfLines={1}>
+          {subtitle}
+        </Text>
+      </View>
+      <Text style={[styles.amount, income ? styles.income : styles.expense]}>
+        {amount}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: spacing.lg,
+  },
+  separator: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
+  },
+  pressed: {
+    backgroundColor: colors.disabledFill,
+  },
+  swatch: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.sm,
+  },
+  info: {
+    flex: 1,
+    minWidth: 0,
+  },
+  category: {
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  subtitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  amount: {
+    ...typography.body,
+    fontVariant: ['tabular-nums'],
+  },
+  income: {
+    color: colors.positive,
+  },
+  expense: {
+    color: colors.negative,
+  },
+});

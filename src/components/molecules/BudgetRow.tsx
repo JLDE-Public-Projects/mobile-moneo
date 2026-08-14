@@ -1,0 +1,134 @@
+import React from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, spacing, typography } from '@/theme';
+
+interface BudgetRowProps {
+  /** Nombre de la categoría. */
+  name: string;
+  /** Texto "gastado de asignado" (p. ej. "248.400 de 800.000"). */
+  label: string;
+  /** Si el gasto superó el presupuesto (colorea en rojo). */
+  over?: boolean;
+  /** Ancho de la barra de progreso, 0–100. */
+  barWidth: number;
+  /** Aumenta el presupuesto. */
+  onIncrease: () => void;
+  /** Reduce el presupuesto. */
+  onDecrease: () => void;
+  /** Dibuja una línea separadora inferior. */
+  showSeparator?: boolean;
+}
+
+/**
+ * Fila de presupuesto por categoría: nombre + "gastado de asignado", botones
+ * para ajustar el límite (± $50.000) y una barra de progreso que se pone en
+ * rojo al pasar del 100%.
+ */
+export function BudgetRow({
+  name,
+  label,
+  over = false,
+  barWidth,
+  onIncrease,
+  onDecrease,
+  showSeparator = false,
+}: BudgetRowProps) {
+  const barColor = over ? colors.negative : colors.accent;
+
+  return (
+    <View style={[styles.row, showSeparator && styles.separator]}>
+      <View style={styles.top}>
+        <View style={styles.info}>
+          <Text style={styles.name} numberOfLines={1}>
+            {name}
+          </Text>
+          <Text style={[styles.label, over && styles.labelOver]}>{label}</Text>
+        </View>
+
+        <Pressable
+          onPress={onDecrease}
+          accessibilityRole="button"
+          accessibilityLabel={`Reducir presupuesto de ${name}`}
+          style={({ pressed }) => [styles.stepper, pressed && styles.pressed]}
+        >
+          <Text style={styles.stepperSign}>−</Text>
+        </Pressable>
+        <Pressable
+          onPress={onIncrease}
+          accessibilityRole="button"
+          accessibilityLabel={`Aumentar presupuesto de ${name}`}
+          style={({ pressed }) => [styles.stepper, pressed && styles.pressed]}
+        >
+          <Text style={styles.stepperSign}>+</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.track}>
+        <View
+          style={[
+            styles.fill,
+            { width: `${Math.min(100, barWidth)}%`, backgroundColor: barColor },
+          ]}
+        />
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: {
+    paddingVertical: 14,
+    paddingHorizontal: spacing.lg,
+  },
+  separator: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
+  },
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  info: {
+    flex: 1,
+    minWidth: 0,
+  },
+  name: {
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  label: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 1,
+    fontVariant: ['tabular-nums'],
+  },
+  labelOver: {
+    color: colors.negative,
+  },
+  stepper: {
+    width: 32,
+    height: 32,
+    borderRadius: 99,
+    backgroundColor: colors.disabledFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperSign: {
+    fontSize: 19,
+    color: colors.textPrimary,
+  },
+  pressed: {
+    opacity: 0.6,
+  },
+  track: {
+    height: 6,
+    borderRadius: 99,
+    backgroundColor: 'rgba(60,60,67,0.08)',
+    marginTop: 10,
+  },
+  fill: {
+    height: 6,
+    borderRadius: 99,
+  },
+});
