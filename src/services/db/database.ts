@@ -7,9 +7,9 @@ import * as SQLite from 'expo-sqlite';
  * repositorios no repitan esa lógica. La conexión se abre una sola vez y se
  * reutiliza (patrón singleton perezoso).
  *
- * TODO(api): cuando el almacenamiento migre a una API externa, este módulo y
- * los repositorios SQLite se sustituyen por implementaciones HTTP detrás de las
- * mismas interfaces; el resto de la app no cambia.
+ * La migración a Supabase es progresiva: los dominios ya migrados (usuarios y
+ * categorías) dejaron de usar esta base, y sus tablas se eliminan en la v9. Aquí
+ * quedan cuentas, movimientos y recurrentes hasta que también se migren.
  */
 
 /** Nombre del archivo de base de datos en el dispositivo. */
@@ -19,7 +19,7 @@ const DATABASE_NAME = 'moneo.db';
  * Versión del esquema. Se incrementa cada vez que cambia la estructura para
  * disparar la migración correspondiente en dispositivos ya instalados.
  */
-const SCHEMA_VERSION = 8;
+const SCHEMA_VERSION = 9;
 
 /** Promesa cacheada de la conexión ya inicializada. */
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -166,6 +166,17 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
         note,
       );
     }
+  }
+
+  // v9: usuarios y categorías pasaron a Supabase, así que sus tablas locales
+  // sobran. Se eliminan aquí (y no borrando las migraciones anteriores) porque
+  // los pasos previos son también el camino de una instalación nueva: quitar la
+  // creación de `categories` rompería el ALTER de la v6 que depende de ella.
+  if (currentVersion < 9) {
+    await db.execAsync(`
+      DROP TABLE IF EXISTS users;
+      DROP TABLE IF EXISTS categories;
+    `);
   }
 
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
