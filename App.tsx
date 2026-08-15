@@ -7,6 +7,7 @@ import {MainNavigator} from '@/navigation/MainNavigator';
 import {AnimatedSplash} from '@/components/organisms/AnimatedSplash';
 import {QueryProvider} from '@/services/react-query/QueryProvider';
 import {initAuthSession} from '@/services/auth/authSession';
+import {purgeLegacyLocalData} from '@/services/db/database';
 import {useLoginMutation, useRegisterMutation} from '@/services/auth/auth.queries';
 import {selectIsAuthenticated, useAuthStore} from '@/store/authStore';
 import {LoginCredentials} from '@/hooks/useLoginForm';
@@ -47,6 +48,12 @@ function AppContent() {
    useEffect(() => {
       const unsubscribe = initAuthSession();
       return unsubscribe;
+   }, []);
+
+   // Los datos viven ahora en Supabase; esto borra lo que quedara guardado en el
+   // dispositivo de versiones anteriores de la app.
+   useEffect(() => {
+      void purgeLegacyLocalData();
    }, []);
 
    // Delegamos en las mutaciones y dejamos que el error se propague (el

@@ -7,10 +7,10 @@ import * as SQLite from 'expo-sqlite';
  * repositorios no repitan esa lógica. La conexión se abre una sola vez y se
  * reutiliza (patrón singleton perezoso).
  *
- * La migración a Supabase es progresiva: los dominios ya migrados (usuarios,
- * categorías, cuentas y movimientos) dejaron de usar esta base y sus tablas se
- * eliminan en las migraciones v9 a v11. Solo quedan aquí los pagos recurrentes,
- * hasta que también se migren.
+ * Ya no guarda nada: todos los dominios viven en Supabase y las migraciones v9
+ * a v12 eliminan las tablas que quedaron. El módulo se conserva únicamente para
+ * limpiar las instalaciones anteriores; cuando no queden, puede retirarse junto
+ * con `expo-sqlite`.
  */
 
 /** Nombre del archivo de base de datos en el dispositivo. */
@@ -20,7 +20,7 @@ const DATABASE_NAME = 'moneo.db';
  * Versión del esquema. Se incrementa cada vez que cambia la estructura para
  * disparar la migración correspondiente en dispositivos ya instalados.
  */
-const SCHEMA_VERSION = 11;
+const SCHEMA_VERSION = 12;
 
 /** Promesa cacheada de la conexión ya inicializada. */
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -190,14 +190,39 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
     await db.execAsync('DROP TABLE IF EXISTS transactions;');
   }
 
+  // v12: los recurrentes cierran la migración. La base local queda vacía y solo
+  // se conserva para no romper las instalaciones que aún la tengan; cuando ya no
+  // queden, puede retirarse junto con `expo-sqlite`.
+  if (currentVersion < 12) {
+    await db.execAsync('DROP TABLE IF EXISTS recurrings;');
+  }
+
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
+}
+
+/**
+ * Borra lo que quedara guardado en el dispositivo de versiones anteriores.
+ *
+ * Ningún repositorio abre ya esta base, así que sin esta llamada las
+ * migraciones de limpieza no se ejecutarían nunca y los datos viejos —incluida
+ * la tabla de usuarios con sus claves cifradas— seguirían en el disco.
+ *
+ * Se llama una vez al arrancar y no interrumpe nada si falla: es una limpieza,
+ * no un requisito para usar la app.
+ */
+export async function purgeLegacyLocalData(): Promise<void> {
+  try {
+    await getDatabase();
+  } catch {
+    // Sin conexión a la base no hay nada que limpiar.
+  }
 }
 
 /**
  * Devuelve la conexión a la BD, abriéndola y migrando el esquema la primera
  * vez. Las llamadas siguientes reutilizan la misma conexión.
  */
-export function getDatabase(): Promise<SQLite.SQLiteDatabase> {
+function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!databasePromise) {
     databasePromise = SQLite.openDatabaseAsync(DATABASE_NAME).then(async (db) => {
       // WAL mejora la concurrencia de lecturas/escrituras en móvil.
