@@ -8,7 +8,7 @@ import { getRepositories } from '@/services/container';
 import { Category, NewCategory } from '@/services/categories/category.types';
 
 /** Clave de caché de la lista de categorías. */
-const CATEGORIES_KEY = ['categories'] as const;
+export const CATEGORIES_KEY = ['categories'] as const;
 
 /**
  * Query con la lista de categorías. Obtiene la implementación activa del
@@ -39,12 +39,37 @@ export function useRemoveCategory() {
   });
 }
 
-/** Mutación para ajustar el presupuesto de una categoría. */
+/**
+ * Mutación para ajustar el presupuesto de una categoría.
+ *
+ * Se actualiza la caché antes de que responda el servidor: el límite se edita a
+ * toques y esperar el viaje de red en cada uno haría sentir la pantalla trabada.
+ * Si la escritura falla se restaura el valor anterior y se relee del servidor.
+ */
 export function useUpdateCategoryBudget() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, budget }: { id: string; budget: number }) =>
       getRepositories().categories.updateBudget(id, budget),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY }),
+
+    onMutate: async ({ id, budget }) => {
+      // Evita que una lectura en vuelo pise el valor recién ajustado.
+      await queryClient.cancelQueries({ queryKey: CATEGORIES_KEY });
+
+      const previous = queryClient.getQueryData<Category[]>(CATEGORIES_KEY);
+      queryClient.setQueryData<Category[]>(CATEGORIES_KEY, (current) =>
+        current?.map((c) => (c.id === id ? { ...c, budget } : c)),
+      );
+
+      return { previous };
+    },
+
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(CATEGORIES_KEY, context.previous);
+      }
+    },
+
+    onSettled: () => queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY }),
   });
 }

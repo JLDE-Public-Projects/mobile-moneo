@@ -5,10 +5,9 @@ import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Card } from '@/components/molecules/Card';
 import { BudgetRow } from '@/components/molecules/BudgetRow';
-import {
-  useCategories,
-  useUpdateCategoryBudget,
-} from '@/services/categories/category.queries';
+import { QueryState } from '@/components/molecules/QueryState';
+import { useCategories } from '@/services/categories/category.queries';
+import { useBudgetAdjuster } from '@/hooks/useBudgetAdjuster';
 import { useTransactions } from '@/services/transactions/transaction.queries';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
@@ -32,9 +31,9 @@ interface BudgetScreenProps {
  * persiste en la categoría.
  */
 export function BudgetScreen({ onBack }: BudgetScreenProps) {
-  const { data: categories = [] } = useCategories();
+  const { data: categories = [], isLoading, isError, refetch } = useCategories();
   const { data: transactions = [] } = useTransactions();
-  const updateBudget = useUpdateCategoryBudget();
+  const { adjust } = useBudgetAdjuster();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
   // Gasto por categoría (solo egresos).
@@ -69,6 +68,12 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
         </View>
         <Text style={styles.title}>Presupuesto</Text>
 
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          errorText="No pudimos cargar tu presupuesto."
+        >
         {/* Total asignado vs gastado */}
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Asignado / gastado</Text>
@@ -97,15 +102,8 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
                 label={`${formatNumber(spent, currency)} de ${formatNumber(c.budget, currency)}`}
                 over={over}
                 barWidth={barWidth}
-                onIncrease={() =>
-                  updateBudget.mutate({ id: c.id, budget: c.budget + BUDGET_STEP })
-                }
-                onDecrease={() =>
-                  updateBudget.mutate({
-                    id: c.id,
-                    budget: Math.max(0, c.budget - BUDGET_STEP),
-                  })
-                }
+                onIncrease={() => adjust(c.id, BUDGET_STEP)}
+                onDecrease={() => adjust(c.id, -BUDGET_STEP)}
                 showSeparator={index < expenseCategories.length - 1}
               />
             );
@@ -117,6 +115,7 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
           {formatNumber(BUDGET_STEP, currency)}. Solo se avisa cuando pasas del
           100%.
         </Text>
+        </QueryState>
       </ScrollView>
     </Screen>
   );
