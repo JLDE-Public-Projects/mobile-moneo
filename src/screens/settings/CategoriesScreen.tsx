@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
@@ -8,6 +8,7 @@ import { Card } from '@/components/molecules/Card';
 import { CategoryRow } from '@/components/molecules/CategoryRow';
 import { AddRow } from '@/components/molecules/AddRow';
 import { NewCategorySheet } from '@/components/organisms/NewCategorySheet';
+import { QueryState } from '@/components/molecules/QueryState';
 import {
   useAddCategory,
   useCategories,
@@ -85,34 +86,20 @@ export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
         </View>
         <Text style={styles.title}>Categorías</Text>
 
-        {/* Las categorías viven en el servidor, así que la pantalla distingue
-            tres estados: cargando, error recuperable y contenido. */}
-        {isLoading ? (
-          <View style={styles.centered}>
-            <ActivityIndicator color={colors.accent} />
-          </View>
-        ) : isError ? (
-          <Card>
-            <View style={styles.centered}>
-              <Text style={styles.errorText}>
-                No pudimos cargar tus categorías.
-              </Text>
-              <Text style={styles.retry} onPress={() => refetch()}>
-                Reintentar
-              </Text>
-            </View>
-          </Card>
-        ) : (
-          <>
-            {renderSection('Egresos', expenses, 'expense', 'Nueva categoría de egreso', false)}
-            {renderSection('Ingresos', incomes, 'income', 'Nueva categoría de ingreso', true)}
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          errorText="No pudimos cargar tus categorías."
+        >
+          {renderSection('Egresos', expenses, 'expense', 'Nueva categoría de egreso', false)}
+          {renderSection('Ingresos', incomes, 'income', 'Nueva categoría de ingreso', true)}
 
-            <Text style={styles.note}>
-              Las categorías con movimientos registrados no se pueden borrar. Cada
-              categoría nueva empieza sin límite de presupuesto.
-            </Text>
-          </>
-        )}
+          <Text style={styles.note}>
+            Las categorías con movimientos registrados no se pueden borrar. Cada
+            categoría nueva empieza sin límite de presupuesto.
+          </Text>
+        </QueryState>
       </ScrollView>
 
       <NewCategorySheet
@@ -142,21 +129,6 @@ const styles = StyleSheet.create({
   },
   sectionSpaced: {
     marginTop: spacing.xl,
-  },
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xxl,
-    gap: spacing.sm,
-  },
-  errorText: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  retry: {
-    ...typography.body,
-    fontWeight: '600',
-    color: colors.accent,
   },
   note: {
     ...typography.caption,
