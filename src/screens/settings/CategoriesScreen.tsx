@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { AppFooter } from '@/components/atoms/AppFooter';
 import { BackLink } from '@/components/atoms/BackLink';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
 import { Card } from '@/components/molecules/Card';
@@ -14,6 +15,7 @@ import {
   useAddCategory,
   useCategories,
   useRemoveCategory,
+  useUsedCategoryNames,
 } from '@/services/categories/category.queries';
 import { Category, CategoryType } from '@/services/categories/category.types';
 import { colors, layout, spacing, typography } from '@/theme';
@@ -35,6 +37,7 @@ interface CategoriesScreenProps {
 export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
   const { t } = useTranslation();
   const { data: categories = [], isLoading, isError, refetch } = useCategories();
+  const { data: usedNames } = useUsedCategoryNames();
   const addCategory = useAddCategory();
   const removeCategory = useRemoveCategory();
 
@@ -61,16 +64,20 @@ export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
     <View style={spaced ? styles.sectionSpaced : undefined}>
       <SectionLabel>{title}</SectionLabel>
       <Card>
-        {list.map((category) => (
-          <CategoryRow
-            key={category.id}
-            name={category.name}
-            color={category.color}
-            sub={t('categories.noMovements')}
-            onRemove={() => removeCategory.mutate(category.id)}
-            showSeparator
-          />
-        ))}
+        {list.map((category) => {
+          const inUse = usedNames?.has(category.name) ?? false;
+          return (
+            <CategoryRow
+              key={category.id}
+              name={category.name}
+              color={category.color}
+              sub={inUse ? t('categories.inUse') : t('categories.noMovements')}
+              removable={!inUse}
+              onRemove={() => removeCategory.mutate(category.id)}
+              showSeparator
+            />
+          );
+        })}
         <AddRow label={addLabel} onPress={() => openSheet(type)} />
       </Card>
     </View>
@@ -101,6 +108,8 @@ export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
             {t('categories.note')}
           </Text>
         </QueryState>
+
+        <AppFooter />
       </ScrollView>
 
       <NewCategorySheet

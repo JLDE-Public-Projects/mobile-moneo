@@ -16,4 +16,6 @@ export interface CategoryRepository {
   remove(id: string): Promise<void>;
   /** Ajusta el presupuesto mensual de una categoría (mínimo 0). */
   updateBudget(id: string, budget: number): Promise<void>;
+  /** Nombres de categorías con al menos un movimiento registrado. */
+  usedNames(): Promise<Set<string>>;
 }

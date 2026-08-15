@@ -30,6 +30,14 @@ export function useAddCategory() {
   });
 }
 
+/** Nombres de categorías con al menos un movimiento registrado. */
+export function useUsedCategoryNames(): UseQueryResult<Set<string>, Error> {
+  return useQuery({
+    queryKey: ['categories', 'usedNames'],
+    queryFn: () => getRepositories().categories.usedNames(),
+  });
+}
+
 /** Mutación para eliminar una categoría; refresca la lista al terminar. */
 export function useRemoveCategory() {
   const queryClient = useQueryClient();

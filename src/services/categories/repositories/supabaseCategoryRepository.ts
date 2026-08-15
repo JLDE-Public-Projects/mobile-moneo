@@ -104,4 +104,16 @@ export const supabaseCategoryRepository: CategoryRepository = {
       throw new Error(i18n.t('categories.repository.updateBudgetFailed'));
     }
   },
+
+  async usedNames() {
+    // Los movimientos guardan la categoría desnormalizada (nombre), no un id:
+    // así conservan su etiqueta original aunque la categoría se renombre o
+    // borre después. Por eso "en uso" se resuelve por nombre, no por id.
+    const { data, error } = await supabase.from('transactions').select('category');
+
+    if (error) {
+      throw new Error(i18n.t('categories.repository.loadFailed'));
+    }
+    return new Set((data as { category: string }[]).map((row) => row.category));
+  },
 };

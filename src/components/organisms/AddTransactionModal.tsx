@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
@@ -239,7 +239,7 @@ export function AddTransactionModal({
           </View>
 
           {/* Monto */}
-          <View style={styles.amountCard}>
+          <Pressable style={styles.amountCard} onPress={Keyboard.dismiss}>
             <Text style={styles.amountLabel}>{t('movements.modal.amount')}</Text>
             <View style={styles.amountRow}>
               <Text style={styles.amountSymbol}>{currency.symbol}</Text>
@@ -250,7 +250,7 @@ export function AddTransactionModal({
               </Text>
               <View style={styles.cursor} />
             </View>
-          </View>
+          </Pressable>
 
           {/* Categoría / cuenta / fecha / nota */}
           <View style={styles.fieldsCard}>
