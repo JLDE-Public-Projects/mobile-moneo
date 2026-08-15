@@ -139,7 +139,10 @@ export default {
 
   expenses: {
     title: 'Expenses',
-    empty: "You don't have any expenses this month yet.",
+    emptyState: {
+      title: 'Nothing to break down yet',
+      subtitle: "Once you log an expense, you'll see where your money goes here.",
+    },
     totalLabel: 'Total expenses',
     pctOfTotal: '{{pct}}% of total',
     over: 'You went {{amount}} over the limit',

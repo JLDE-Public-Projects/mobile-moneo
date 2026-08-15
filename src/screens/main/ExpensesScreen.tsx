@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { AppFooter } from '@/components/atoms/AppFooter';
 import { IconButton } from '@/components/atoms/IconButton';
+import { EmptyExpenses } from '@/components/organisms/EmptyExpenses';
 import { SettingsIcon } from '@/components/icons/SettingsIcon';
 import { Card } from '@/components/molecules/Card';
 import { ListRow } from '@/components/molecules/ListRow';
@@ -133,7 +134,7 @@ export function ExpensesScreen({
         </View>
 
         {isEmpty ? (
-          <Text style={styles.empty}>{t('expenses.empty')}</Text>
+          <EmptyExpenses />
         ) : (
           <>
             {/* Total + barra apilada */}
@@ -244,12 +245,5 @@ const styles = StyleSheet.create({
   },
   budgetCard: {
     marginTop: 18,
-  },
-  empty: {
-    ...typography.subtitle,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingVertical: spacing.xxxl,
   },
 });

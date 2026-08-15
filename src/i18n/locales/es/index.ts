@@ -148,7 +148,10 @@ export default {
 
   expenses: {
     title: 'Gastos',
-    empty: 'Aún no tienes egresos este mes.',
+    emptyState: {
+      title: 'Nada que repartir todavía',
+      subtitle: 'Cuando registres un egreso, aquí verás en qué se te va el dinero.',
+    },
     totalLabel: 'Total egresos',
     pctOfTotal: '{{pct}}% del total',
     over: 'Te pasaste {{amount}} del límite',
