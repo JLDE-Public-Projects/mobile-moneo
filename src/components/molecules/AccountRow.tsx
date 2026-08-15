@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface AccountRowProps {
@@ -13,6 +13,8 @@ interface AccountRowProps {
   balance: string;
   /** Si el saldo es negativo (deuda), para colorearlo en rojo. */
   negative?: boolean;
+  /** Abre la edición de la cuenta. Sin este callback la fila no es tocable. */
+  onPress?: () => void;
   /** Dibuja una línea separadora inferior. */
   showSeparator?: boolean;
 }
@@ -28,10 +30,11 @@ export function AccountRow({
   color,
   balance,
   negative = false,
+  onPress,
   showSeparator = false,
 }: AccountRowProps) {
-  return (
-    <View style={[styles.row, showSeparator && styles.separator]}>
+  const content = (
+    <>
       <View style={[styles.swatch, { backgroundColor: color }]} />
       <View style={styles.info}>
         <Text style={styles.name} numberOfLines={1}>
@@ -44,7 +47,32 @@ export function AccountRow({
       <Text style={[styles.balance, negative && styles.balanceNegative]}>
         {balance}
       </Text>
-    </View>
+    </>
+  );
+
+  // Sin `onPress` la fila sigue siendo de solo lectura, para poder reutilizarla
+  // en listados donde no se edita (por ejemplo, un selector de cuenta).
+  if (!onPress) {
+    return (
+      <View style={[styles.row, showSeparator && styles.separator]}>
+        {content}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Editar ${name}`}
+      style={({ pressed }) => [
+        styles.row,
+        showSeparator && styles.separator,
+        pressed && styles.pressed,
+      ]}
+    >
+      {content}
+    </Pressable>
   );
 }
 
@@ -59,6 +87,9 @@ const styles = StyleSheet.create({
   separator: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
+  },
+  pressed: {
+    opacity: 0.6,
   },
   swatch: {
     width: 30,

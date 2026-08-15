@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { Button } from '@/components/atoms/Button';
 import { FormMessage } from '@/components/atoms/FormMessage';
@@ -9,36 +9,45 @@ import {
   balanceLabel,
   DEFAULT_ACCOUNT_KIND,
 } from '@/services/accounts/account.constants';
-import { AccountKind, NewAccount } from '@/services/accounts/account.types';
+import { Account, AccountKind, NewAccount } from '@/services/accounts/account.types';
 import { colors, radius, spacing, typography } from '@/theme';
 
-interface NewAccountSheetProps {
+interface AccountSheetProps {
   /** Si la hoja está visible. */
   visible: boolean;
-  /** Color asignado a la cuenta nueva (siguiente de la paleta). */
+  /** Cuenta a editar; si falta, la hoja crea una nueva. */
+  account?: Account | null;
+  /** Color de la cuenta nueva (siguiente de la paleta). Ignorado al editar. */
   color: string;
   /** Cierra la hoja. */
   onClose: () => void;
-  /** Crea la cuenta; lanza para mostrar un error. */
-  onCreate: (input: NewAccount) => Promise<void>;
+  /** Guarda la cuenta (alta o edición); lanza para mostrar un error. */
+  onSave: (input: NewAccount) => Promise<void>;
+  /** Elimina la cuenta que se está editando; lanza para mostrar un error. */
+  onRemove?: () => Promise<void>;
 }
 
 /** Solo dígitos, para los campos numéricos. */
 const onlyDigits = (value: string) => value.replace(/[^0-9]/g, '');
 
 /**
- * Hoja inferior para crear una cuenta (organismo).
+ * Hoja inferior para crear o editar una cuenta (organismo).
  *
  * Reúne el tipo (Banco/Efectivo/Crédito), el nombre, el saldo (o la deuda, para
- * crédito) y, en crédito, la fecha de corte. Mantiene su estado local y delega
- * la creación en `onCreate`; al tener éxito se cierra.
+ * crédito) y, en crédito, la fecha de corte. Es la misma hoja en ambos casos:
+ * el formulario es idéntico y duplicarlo solo llevaría a que se separaran con
+ * el tiempo. Al editar se precarga la cuenta y aparece la opción de eliminarla.
  */
-export function NewAccountSheet({
+export function AccountSheet({
   visible,
+  account,
   color,
   onClose,
-  onCreate,
-}: NewAccountSheetProps) {
+  onSave,
+  onRemove,
+}: AccountSheetProps) {
+  const isEditing = Boolean(account);
+
   const [kind, setKind] = useState<AccountKind>(DEFAULT_ACCOUNT_KIND);
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
@@ -46,19 +55,29 @@ export function NewAccountSheet({
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Al abrir, reiniciamos el formulario.
+  // Al abrir, precargamos la cuenta que se edita o dejamos el formulario limpio.
   useEffect(() => {
-    if (visible) {
+    if (!visible) return;
+
+    setErrorMessage('');
+    if (account) {
+      setKind(account.kind);
+      setName(account.name);
+      // El saldo se guarda con signo (negativo = deuda) pero se edita en
+      // positivo: el signo lo pone el tipo de cuenta al guardar.
+      setBalance(account.balance === 0 ? '' : String(Math.abs(account.balance)));
+      setCutDay(account.cutDay ? String(account.cutDay) : '');
+    } else {
       setKind(DEFAULT_ACCOUNT_KIND);
       setName('');
       setBalance('');
       setCutDay('');
-      setErrorMessage('');
     }
-  }, [visible]);
+  }, [visible, account]);
 
   const isCredit = kind === 'credit';
   const canSubmit = name.trim().length > 0;
+  const swatchColor = account?.color ?? color;
 
   const handleSave = async () => {
     if (isSubmitting) return;
@@ -75,11 +94,11 @@ export function NewAccountSheet({
     setIsSubmitting(true);
     setErrorMessage('');
     try {
-      await onCreate({
+      await onSave({
         name: name.trim(),
         kind,
         balance: signedBalance,
-        color,
+        color: swatchColor,
         cutDay: day,
       });
       onClose();
@@ -87,16 +106,53 @@ export function NewAccountSheet({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos crear la cuenta. Inténtalo de nuevo.';
+          : 'No pudimos guardar la cuenta. Inténtalo de nuevo.';
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Eliminar no se puede deshacer, así que se confirma antes. Se aclara que los
+  // movimientos ya registrados se conservan: guardan el nombre de la cuenta,
+  // no una referencia, y por eso el historial no se rompe.
+  const handleRemove = () => {
+    if (!account || !onRemove) return;
+
+    Alert.alert(
+      `¿Eliminar ${account.name}?`,
+      'Los movimientos que registraste con esta cuenta se conservan en tu historial.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            setIsSubmitting(true);
+            setErrorMessage('');
+            try {
+              await onRemove();
+              onClose();
+            } catch (error) {
+              const message =
+                error instanceof Error && error.message
+                  ? error.message
+                  : 'No pudimos eliminar la cuenta.';
+              setErrorMessage(message);
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text style={styles.title}>Agregar cuenta</Text>
+      <Text style={styles.title}>
+        {isEditing ? 'Editar cuenta' : 'Agregar cuenta'}
+      </Text>
 
       {/* Tipo de cuenta */}
       <View style={styles.segment}>
@@ -110,7 +166,7 @@ export function NewAccountSheet({
       <View style={styles.card}>
         {/* Nombre con vista previa del color */}
         <View style={styles.row}>
-          <View style={[styles.swatch, { backgroundColor: color }]} />
+          <View style={[styles.swatch, { backgroundColor: swatchColor }]} />
           <TextInput
             style={styles.input}
             placeholder="Nombre de la cuenta"
@@ -153,11 +209,21 @@ export function NewAccountSheet({
       <FormMessage message={errorMessage} />
 
       <Button
-        label="Guardar cuenta"
+        label={isEditing ? 'Guardar cambios' : 'Guardar cuenta'}
         onPress={handleSave}
         disabled={!canSubmit}
         loading={isSubmitting}
       />
+
+      {isEditing && onRemove && (
+        <Button
+          label="Eliminar cuenta"
+          variant="secondary"
+          destructive
+          onPress={handleRemove}
+          style={styles.removeButton}
+        />
+      )}
     </BottomSheet>
   );
 }
@@ -224,5 +290,8 @@ const styles = StyleSheet.create({
     width: 120,
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
+  },
+  removeButton: {
+    marginTop: spacing.sm,
   },
 });
