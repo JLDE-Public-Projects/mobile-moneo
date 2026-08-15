@@ -10,10 +10,15 @@ interface CategoryStatRowProps {
   color: string;
   /** Monto ya formateado (p. ej. "$1.800.000"). */
   amount: string;
-  /** Porcentaje sobre el total (p. ej. "42%"). */
-  pct: string;
-  /** Ancho de la barra de progreso, 0–100 (relativo a la categoría mayor). */
+  /** Peso de la categoría sobre el total de egresos (p. ej. "18% del total"). */
+  share: string;
+  /** Ancho de la barra, 0–100. */
   barWidth: number;
+  /**
+   * Estado del presupuesto (p. ej. "Quedan $80.000 de $800.000"). Si falta, la
+   * categoría no tiene límite y solo se muestra su peso en el total.
+   */
+  hint?: string;
   /** Si el gasto superó el presupuesto de la categoría. */
   over?: boolean;
   /** Acción al pulsar (abre el detalle de la categoría). */
@@ -23,24 +28,31 @@ interface CategoryStatRowProps {
 }
 
 /**
- * Fila de estadística por categoría (usada en "Gastos"): un punto de color, el
- * nombre con una barra de progreso proporcional, y a la derecha el monto con su
- * porcentaje del total.
+ * Fila de estadística por categoría (usada en "Gastos").
+ *
+ * Muestra las dos lecturas que interesan sin mezclarlas: a la izquierda, cuánto
+ * se lleva consumido del límite (la barra y el texto de apoyo), que es lo que
+ * dice si hay que frenar; a la derecha, el monto y su peso dentro del total de
+ * egresos, que dice en qué se va el dinero.
+ *
+ * Cuando la categoría no tiene límite, la barra pasa a medir su tamaño
+ * relativo, que es la única comparación posible.
  */
 export function CategoryStatRow({
   name,
   color,
   amount,
-  pct,
+  share,
   barWidth,
+  hint,
   over = false,
   onPress,
   showSeparator = false,
 }: CategoryStatRowProps) {
-  // Al pasarse del presupuesto, la barra y el monto se tiñen de rojo: es la
-  // misma señal que ya usa la pantalla de presupuesto, para que "pasarse"
-  // se lea igual en toda la app.
+  // Al pasarse del límite, la barra y el texto de apoyo se tiñen de rojo: es la
+  // misma señal que usa la pantalla de presupuesto.
   const barColor = over ? colors.negative : color;
+
   return (
     <Pressable
       onPress={onPress}
@@ -65,12 +77,17 @@ export function CategoryStatRow({
             ]}
           />
         </View>
+        {hint !== undefined && (
+          <Text style={[styles.hint, over && styles.hintOver]} numberOfLines={1}>
+            {hint}
+          </Text>
+        )}
       </View>
 
       <View style={styles.right}>
         <Text style={[styles.amount, over && styles.amountOver]}>{amount}</Text>
-        <Text style={[styles.pct, over && styles.pctOver]}>
-          {over ? 'Te pasaste' : pct}
+        <Text style={styles.share} numberOfLines={1}>
+          {share}
         </Text>
       </View>
 
@@ -117,6 +134,15 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 99,
   },
+  hint: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 5,
+  },
+  hintOver: {
+    color: colors.negative,
+    fontWeight: '600',
+  },
   right: {
     alignItems: 'flex-end',
   },
@@ -128,12 +154,8 @@ const styles = StyleSheet.create({
   amountOver: {
     color: colors.negative,
   },
-  pct: {
+  share: {
     fontSize: 12,
     color: colors.textSecondary,
-  },
-  pctOver: {
-    color: colors.negative,
-    fontWeight: '600',
   },
 });

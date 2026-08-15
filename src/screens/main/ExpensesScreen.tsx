@@ -82,6 +82,38 @@ export function ExpensesScreen({
 
   const isEmpty = categories.length === 0;
 
+  const money = (value: number) =>
+    `${currency.symbol}${formatNumber(value, currency)}`;
+
+  /**
+   * Las dos lecturas de una categoría, que responden preguntas distintas.
+   *
+   * `share` es su peso dentro del total de egresos: en qué se va el dinero.
+   * `hint` y `barWidth` hablan del límite: cuánto queda o cuánto se pasó, que
+   * es lo que dice si hay que frenar.
+   *
+   * Sin límite no hay contra qué medir, así que la barra vuelve a comparar la
+   * categoría con la que más gasta, que es la única referencia disponible.
+   */
+  const categoryStats = (c: CategoryTotal) => {
+    const share = `${Math.round((c.total / total) * 100)}% del total`;
+    const budget = budgetByCategory.get(c.name);
+
+    if (!budget) {
+      return { share, hint: undefined, barWidth: (c.total / max) * 100, over: false };
+    }
+
+    const over = c.total > budget;
+    return {
+      share,
+      hint: over
+        ? `Te pasaste ${money(c.total - budget)} del límite`
+        : `Quedan ${money(budget - c.total)} de ${money(budget)}`,
+      barWidth: (c.total / budget) * 100,
+      over,
+    };
+  };
+
   return (
     <Screen bottomInset={false}>
       <StatusBar style="dark" />
@@ -123,19 +155,23 @@ export function ExpensesScreen({
 
             {/* Desglose por categoría */}
             <Card style={styles.listCard}>
-              {categories.map((c, index) => (
-                <CategoryStatRow
-                  key={c.name}
-                  name={c.name}
-                  color={c.color}
-                  amount={`${currency.symbol}${formatNumber(c.total, currency)}`}
-                  pct={`${Math.round((c.total / total) * 100)}%`}
-                  barWidth={(c.total / max) * 100}
-                  over={c.total > (budgetByCategory.get(c.name) ?? Infinity)}
-                  showSeparator={index < categories.length - 1}
-                  onPress={() => onOpenCategory(c.name)}
-                />
-              ))}
+              {categories.map((c, index) => {
+                const stats = categoryStats(c);
+                return (
+                  <CategoryStatRow
+                    key={c.name}
+                    name={c.name}
+                    color={c.color}
+                    amount={money(c.total)}
+                    share={stats.share}
+                    hint={stats.hint}
+                    barWidth={stats.barWidth}
+                    over={stats.over}
+                    showSeparator={index < categories.length - 1}
+                    onPress={() => onOpenCategory(c.name)}
+                  />
+                );
+              })}
             </Card>
 
             {/* Acceso al presupuesto */}
