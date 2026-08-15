@@ -1,7 +1,7 @@
 import { AuthRepository } from '@/services/auth/auth.repository';
 import { supabaseAuthRepository } from '@/services/auth/repositories/supabaseAuthRepository';
 import { CategoryRepository } from '@/services/categories/category.repository';
-import { sqliteCategoryRepository } from '@/services/categories/repositories/sqliteCategoryRepository';
+import { supabaseCategoryRepository } from '@/services/categories/repositories/supabaseCategoryRepository';
 import { AccountRepository } from '@/services/accounts/account.repository';
 import { sqliteAccountRepository } from '@/services/accounts/repositories/sqliteAccountRepository';
 import { TransactionRepository } from '@/services/transactions/transaction.repository';
@@ -35,10 +35,10 @@ interface AppRepositories {
  *   configureRepositories({ auth: apiAuthRepository });
  */
 let repositories: AppRepositories = {
-  // Autenticación en Supabase; los demás dominios siguen en SQLite local hasta
-  // migrar la persistencia de datos a la API de Supabase.
+  // Autenticación y categorías en Supabase; los demás dominios siguen en SQLite
+  // local hasta migrar el resto de la persistencia.
   auth: supabaseAuthRepository,
-  categories: sqliteCategoryRepository,
+  categories: supabaseCategoryRepository,
   accounts: sqliteAccountRepository,
   transactions: sqliteTransactionRepository,
   recurrings: sqliteRecurringRepository,
