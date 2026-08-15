@@ -15,18 +15,10 @@ import { Button } from '@/components/atoms/Button';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
 import { Card } from '@/components/molecules/Card';
 import { InputRow } from '@/components/molecules/InputRow';
-import { useUpdateProfile } from '@/services/auth/auth.queries';
+import { useInviteCodeQuery, useUpdateProfile } from '@/services/auth/auth.queries';
 import { useAuthStore } from '@/store/authStore';
-import {
-  isValidName,
-  isValidPassword,
-  isValidUsername,
-  normalizeUsername,
-} from '@/utils/validation';
+import { isValidName, isValidPassword } from '@/utils/validation';
 import { colors, layout, radius, spacing, typography } from '@/theme';
-
-/** Código de invitación de la cuenta (compartible). */
-const INVITE_CODE = 'MONEO-2026';
 
 /** Callbacks de navegación que la pantalla delega en su contenedor. */
 interface ProfileScreenProps {
@@ -44,9 +36,9 @@ interface ProfileScreenProps {
 export function ProfileScreen({ onBack }: ProfileScreenProps) {
   const user = useAuthStore((state) => state.session?.user);
   const updateProfile = useUpdateProfile();
+  const inviteCode = useInviteCodeQuery(user?.id);
 
   const [name, setName] = useState(user?.name ?? '');
-  const [username, setUsername] = useState(user?.username ?? '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [feedback, setFeedback] = useState<{ text: string; ok: boolean } | null>(
@@ -59,9 +51,9 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   const handleSave = async () => {
     if (updateProfile.isPending) return;
 
-    // Validación de formato.
-    if (!isValidName(name) || !isValidUsername(username)) {
-      setFeedback({ text: 'Revisa tu nombre y usuario.', ok: false });
+    // Validación de formato (el usuario es de solo lectura, no se valida aquí).
+    if (!isValidName(name)) {
+      setFeedback({ text: 'Revisa tu nombre.', ok: false });
       return;
     }
     if (newPassword && !isValidPassword(newPassword)) {
@@ -78,7 +70,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
       await updateProfile.mutateAsync({
         id: user.id,
         name,
-        username,
+        // El usuario no se puede cambiar; se reenvía el actual sin modificar.
+        username: user.username,
         currentPassword: newPassword ? currentPassword : undefined,
         newPassword: newPassword || undefined,
       });
@@ -137,14 +130,16 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             />
             <InputRow
               label="Usuario"
-              placeholder="Tu usuario"
               autoCapitalize="none"
               autoCorrect={false}
-              maxLength={20}
-              value={username}
-              onChangeText={(v) => setUsername(normalizeUsername(v))}
+              value={user?.username ?? ''}
+              editable={false}
+              inputStyle={styles.readonly}
             />
           </Card>
+          <Text style={styles.note}>
+            Tu usuario identifica tu cuenta y no se puede cambiar.
+          </Text>
 
           {/* Cambiar clave */}
           <SectionLabel style={styles.sectionSpacing}>Cambiar clave</SectionLabel>
@@ -194,7 +189,9 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           <View style={styles.inviteCard}>
             <Text style={styles.inviteLabel}>Tu código de invitación</Text>
             <View style={styles.inviteRow}>
-              <Text style={styles.inviteCode}>{INVITE_CODE}</Text>
+              <Text style={styles.inviteCode}>
+                {inviteCode.data ?? (inviteCode.isLoading ? '···' : '—')}
+              </Text>
               <Pressable onPress={handleCopy} style={styles.copyButton}>
                 <Text style={styles.copyText}>{copyLabel}</Text>
               </Pressable>
@@ -247,6 +244,9 @@ const styles = StyleSheet.create({
   },
   sectionSpacing: {
     paddingTop: spacing.xl,
+  },
+  readonly: {
+    color: colors.textSecondary,
   },
   feedback: {
     ...typography.caption,

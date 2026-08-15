@@ -102,7 +102,7 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
                <Card>
                   <InputRow
                      label="Código"
-                     placeholder="MONEO-0000"
+                     placeholder="MONEO-000000"
                      autoCapitalize="characters"
                      autoCorrect={false}
                      value={form.inviteCode}

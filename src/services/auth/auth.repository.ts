@@ -22,4 +22,6 @@ export interface AuthRepository {
   register(payload: RegisterPayload): Promise<AuthSession>;
   /** Actualiza el perfil (y, opcionalmente, la clave). Devuelve el usuario. */
   updateProfile(input: UpdateProfileInput): Promise<AuthUser>;
+  /** Código de invitación propio del usuario autenticado (para compartir). */
+  getInviteCode(): Promise<string>;
 }

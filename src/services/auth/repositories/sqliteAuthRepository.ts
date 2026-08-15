@@ -140,4 +140,10 @@ export const sqliteAuthRepository: AuthRepository = {
 
     return { id, username: normalizedUsername, name: name.trim() };
   },
+
+  // La implementación local no maneja invitaciones (viven en Supabase); se
+  // devuelve un marcador para cumplir el contrato.
+  async getInviteCode() {
+    return 'MONEO-0000';
+  },
 };

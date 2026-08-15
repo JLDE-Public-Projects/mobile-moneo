@@ -11,6 +11,7 @@ import {ListRow} from '@/components/molecules/ListRow';
 import {TAB_BAR_SPACE} from '@/screens/main/PlaceholderScreen';
 import {SelectionSheet, SelectOption} from '@/components/organisms/SelectionSheet';
 import {useAuthStore} from '@/store/authStore';
+import {signOut} from '@/services/auth/authSession';
 import {useSettingsStore} from '@/store/settingsStore';
 import {
    CURRENCIES,
@@ -47,7 +48,10 @@ interface SettingsScreenProps {
  */
 export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenBudget}: SettingsScreenProps) {
    const session = useAuthStore((state) => state.session);
-   const clearSession = useAuthStore((state) => state.clearSession);
+   // El logout se hace en Supabase; el listener de sesión limpia el store solo.
+   const handleLogout = () => {
+      void signOut();
+   };
 
    // Moneda (preferencia global) + hoja de selección.
    const currency = useSettingsStore((state) => state.currency);
@@ -122,8 +126,7 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
 
             {/* Cerrar sesión */}
             <Card style={styles.logoutCard}>
-               <Button label="Cerrar sesión" variant="secondary" destructive onPress={clearSession}/>
-               {/*<ListRow label="Cerrar sesión" align="center" detail="" tintColor={colors.negative} onPress={clearSession}/>*/}
+               <Button label="Cerrar sesión" variant="secondary" destructive onPress={handleLogout}/>
             </Card>
 
             <Text style={styles.note}>

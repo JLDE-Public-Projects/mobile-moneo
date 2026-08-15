@@ -55,10 +55,12 @@ export function isValidName(value: string): boolean {
 }
 
 /**
- * Formato del código de invitación: prefijo "MONEO-" seguido de 4 dígitos.
- * Se valida en mayúsculas porque el campo se normaliza al escribir.
+ * Formato del código de invitación: prefijo "MONEO-" seguido de 6 caracteres
+ * hexadecimales (0-9, A-F) — así es como Supabase los genera (ver
+ * `generate_invite_code` en supabase/schema.sql). Se valida en mayúsculas
+ * porque el campo se normaliza al escribir.
  */
-const INVITE_CODE_PATTERN = /^MONEO-\d{4}$/;
+const INVITE_CODE_PATTERN = /^MONEO-[0-9A-Z]{6}$/;
 
 /** Normaliza el código a mayúsculas y sin espacios para validarlo/enviarlo. */
 export function normalizeInviteCode(value: string): string {

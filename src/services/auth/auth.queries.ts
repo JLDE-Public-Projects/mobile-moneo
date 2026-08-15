@@ -1,4 +1,9 @@
-import { useMutation, UseMutationResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import { getRepositories } from '@/services/container';
 import {
   AuthSession,
@@ -58,5 +63,18 @@ export function useUpdateProfile(): UseMutationResult<
     mutationFn: (input: UpdateProfileInput) =>
       getRepositories().auth.updateProfile(input),
     onSuccess: (user) => setUser(user),
+  });
+}
+
+/**
+ * Consulta el código de invitación propio del usuario para compartirlo.
+ * Se cachea por sesión; solo se pide cuando hay un usuario autenticado.
+ */
+export function useInviteCodeQuery(userId?: string): UseQueryResult<string, Error> {
+  return useQuery({
+    queryKey: ['inviteCode', userId],
+    queryFn: () => getRepositories().auth.getInviteCode(),
+    enabled: Boolean(userId),
+    staleTime: Infinity,
   });
 }

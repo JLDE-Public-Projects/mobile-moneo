@@ -6,6 +6,7 @@ import {AuthFlow} from '@/screens/auth/AuthFlow';
 import {MainNavigator} from '@/navigation/MainNavigator';
 import {AnimatedSplash} from '@/components/organisms/AnimatedSplash';
 import {QueryProvider} from '@/services/react-query/QueryProvider';
+import {initAuthSession} from '@/services/auth/authSession';
 import {useLoginMutation, useRegisterMutation} from '@/services/auth/auth.queries';
 import {selectIsAuthenticated, useAuthStore} from '@/store/authStore';
 import {LoginCredentials} from '@/hooks/useLoginForm';
@@ -41,6 +42,13 @@ function AppContent() {
       SplashScreen.hideAsync();
    }, []);
 
+   // Conectamos la sesión de Supabase con el store: restaura la sesión
+   // persistida al arrancar y escucha login/logout mientras la app vive.
+   useEffect(() => {
+      const unsubscribe = initAuthSession();
+      return unsubscribe;
+   }, []);
+
    // Delegamos en las mutaciones y dejamos que el error se propague (el
    // formulario lo mostrará). Al tener éxito, la sesión se guarda en Zustand y la
    // UI cambia sola a la pantalla autenticada.
@@ -52,23 +60,17 @@ function AppContent() {
       await registerMutation.mutateAsync(data);
    }, [registerMutation]);
 
-   return (
-      <View style={styles.root}>
-         {isAuthenticated ? (
-            <MainNavigator/>
-         ) : (
-            <AuthFlow
-               onLogin={handleLogin}
-               onRegister={handleRegister}
-               onBiometricLogin={() => console.log('inicio de sesión biométrico')}
-            />
-         )}
+   return <View style={styles.root}>
+      {isAuthenticated ? (
+         <MainNavigator/>
+      ) : (
+         <AuthFlow onLogin={handleLogin} onRegister={handleRegister} onBiometricLogin={() => console.log('inicio de sesión biométrico')}/>
+      )}
 
-         {isSplashVisible && (
-            <AnimatedSplash onFinish={() => setSplashVisible(false)}/>
-         )}
-      </View>
-   );
+      {isSplashVisible && (
+         <AnimatedSplash onFinish={() => setSplashVisible(false)}/>
+      )}
+   </View>
 }
 
 /**
@@ -89,17 +91,13 @@ export default function App() {
       Sora_800ExtraBold,
    });
 
-   if (!fontsLoaded) {
-      return null;
-   }
+   if (!fontsLoaded) return null;
 
-   return (
-      <SafeAreaProvider>
-         <QueryProvider>
-            <AppContent/>
-         </QueryProvider>
-      </SafeAreaProvider>
-   );
+   return <SafeAreaProvider>
+      <QueryProvider>
+         <AppContent/>
+      </QueryProvider>
+   </SafeAreaProvider>
 }
 
 const styles = StyleSheet.create({

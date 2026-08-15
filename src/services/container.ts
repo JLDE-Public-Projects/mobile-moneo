@@ -1,5 +1,5 @@
 import { AuthRepository } from '@/services/auth/auth.repository';
-import { sqliteAuthRepository } from '@/services/auth/repositories/sqliteAuthRepository';
+import { supabaseAuthRepository } from '@/services/auth/repositories/supabaseAuthRepository';
 import { CategoryRepository } from '@/services/categories/category.repository';
 import { sqliteCategoryRepository } from '@/services/categories/repositories/sqliteCategoryRepository';
 import { AccountRepository } from '@/services/accounts/account.repository';
@@ -35,7 +35,9 @@ interface AppRepositories {
  *   configureRepositories({ auth: apiAuthRepository });
  */
 let repositories: AppRepositories = {
-  auth: sqliteAuthRepository,
+  // Autenticación en Supabase; los demás dominios siguen en SQLite local hasta
+  // migrar la persistencia de datos a la API de Supabase.
+  auth: supabaseAuthRepository,
   categories: sqliteCategoryRepository,
   accounts: sqliteAccountRepository,
   transactions: sqliteTransactionRepository,
