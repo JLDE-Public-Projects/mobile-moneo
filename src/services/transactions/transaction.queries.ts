@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   useMutation,
   useQuery,
@@ -9,18 +10,28 @@ import {
   NewTransaction,
   Transaction,
 } from '@/services/transactions/transaction.types';
+import { monthRange } from '@/utils/date';
 
-/** Clave de caché de la lista de movimientos. */
-const TRANSACTIONS_KEY = ['transactions'] as const;
+/** Clave de caché de los movimientos de un mes. */
+function transactionsKey(from: number) {
+  return ['transactions', from] as const;
+}
 
 /**
- * Query con la lista de movimientos. Obtiene la implementación activa del
- * repositorio desde el contenedor (no sabe si es SQLite o API).
+ * Query con los movimientos del mes en curso.
+ *
+ * Moneo trabaja mes a mes, así que este hook es el único punto que decide qué
+ * mes se pide; todas las pantallas que lo usan (resumen, movimientos, gastos,
+ * presupuesto, detalle de categoría, recurrentes) hablan del mismo periodo sin
+ * tener que filtrar por su cuenta.
  */
 export function useTransactions(): UseQueryResult<Transaction[], Error> {
+  // El rango se calcula una vez por render y solo cambia al cambiar de mes.
+  const range = useMemo(() => monthRange(), []);
+
   return useQuery({
-    queryKey: TRANSACTIONS_KEY,
-    queryFn: () => getRepositories().transactions.list(),
+    queryKey: transactionsKey(range.from),
+    queryFn: () => getRepositories().transactions.list(range),
   });
 }
 
@@ -33,7 +44,9 @@ export function useAddTransaction() {
   return useMutation({
     mutationFn: (input: NewTransaction) =>
       getRepositories().transactions.add(input),
+    // Se invalida por prefijo para refrescar cualquier mes en caché: un
+    // movimiento con fecha de otro mes también debe verse reflejado.
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: TRANSACTIONS_KEY }),
+      queryClient.invalidateQueries({ queryKey: ['transactions'] }),
   });
 }

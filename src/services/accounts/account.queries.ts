@@ -29,3 +29,22 @@ export function useAddAccount() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }),
   });
 }
+
+/** Mutación para editar una cuenta; refresca la lista al terminar. */
+export function useUpdateAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: NewAccount }) =>
+      getRepositories().accounts.update(id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }),
+  });
+}
+
+/** Mutación para eliminar una cuenta; refresca la lista al terminar. */
+export function useRemoveAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => getRepositories().accounts.remove(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ACCOUNTS_KEY }),
+  });
+}

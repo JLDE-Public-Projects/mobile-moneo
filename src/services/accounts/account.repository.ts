@@ -12,4 +12,8 @@ export interface AccountRepository {
   list(): Promise<Account[]>;
   /** Crea una cuenta y devuelve la creada. */
   add(input: NewAccount): Promise<Account>;
+  /** Edita una cuenta existente y devuelve la actualizada. */
+  update(id: string, input: NewAccount): Promise<Account>;
+  /** Elimina una cuenta por id. */
+  remove(id: string): Promise<void>;
 }

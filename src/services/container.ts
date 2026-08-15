@@ -3,9 +3,9 @@ import { supabaseAuthRepository } from '@/services/auth/repositories/supabaseAut
 import { CategoryRepository } from '@/services/categories/category.repository';
 import { supabaseCategoryRepository } from '@/services/categories/repositories/supabaseCategoryRepository';
 import { AccountRepository } from '@/services/accounts/account.repository';
-import { sqliteAccountRepository } from '@/services/accounts/repositories/sqliteAccountRepository';
+import { supabaseAccountRepository } from '@/services/accounts/repositories/supabaseAccountRepository';
 import { TransactionRepository } from '@/services/transactions/transaction.repository';
-import { sqliteTransactionRepository } from '@/services/transactions/repositories/sqliteTransactionRepository';
+import { supabaseTransactionRepository } from '@/services/transactions/repositories/supabaseTransactionRepository';
 import { RecurringRepository } from '@/services/recurrings/recurring.repository';
 import { sqliteRecurringRepository } from '@/services/recurrings/repositories/sqliteRecurringRepository';
 
@@ -35,12 +35,12 @@ interface AppRepositories {
  *   configureRepositories({ auth: apiAuthRepository });
  */
 let repositories: AppRepositories = {
-  // Autenticación y categorías en Supabase; los demás dominios siguen en SQLite
-  // local hasta migrar el resto de la persistencia.
+  // Todo en Supabase salvo los recurrentes, que siguen en SQLite local hasta
+  // migrar también esa parte.
   auth: supabaseAuthRepository,
   categories: supabaseCategoryRepository,
-  accounts: sqliteAccountRepository,
-  transactions: sqliteTransactionRepository,
+  accounts: supabaseAccountRepository,
+  transactions: supabaseTransactionRepository,
   recurrings: sqliteRecurringRepository,
 };
 

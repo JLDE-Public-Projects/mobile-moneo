@@ -7,9 +7,10 @@ import * as SQLite from 'expo-sqlite';
  * repositorios no repitan esa lógica. La conexión se abre una sola vez y se
  * reutiliza (patrón singleton perezoso).
  *
- * La migración a Supabase es progresiva: los dominios ya migrados (usuarios y
- * categorías) dejaron de usar esta base, y sus tablas se eliminan en la v9. Aquí
- * quedan cuentas, movimientos y recurrentes hasta que también se migren.
+ * La migración a Supabase es progresiva: los dominios ya migrados (usuarios,
+ * categorías, cuentas y movimientos) dejaron de usar esta base y sus tablas se
+ * eliminan en las migraciones v9 a v11. Solo quedan aquí los pagos recurrentes,
+ * hasta que también se migren.
  */
 
 /** Nombre del archivo de base de datos en el dispositivo. */
@@ -19,7 +20,7 @@ const DATABASE_NAME = 'moneo.db';
  * Versión del esquema. Se incrementa cada vez que cambia la estructura para
  * disparar la migración correspondiente en dispositivos ya instalados.
  */
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 11;
 
 /** Promesa cacheada de la conexión ya inicializada. */
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
@@ -177,6 +178,16 @@ async function migrate(db: SQLite.SQLiteDatabase): Promise<void> {
       DROP TABLE IF EXISTS users;
       DROP TABLE IF EXISTS categories;
     `);
+  }
+
+  // v10: las cuentas también pasaron a Supabase.
+  if (currentVersion < 10) {
+    await db.execAsync('DROP TABLE IF EXISTS accounts;');
+  }
+
+  // v11: y los movimientos. Solo quedan los recurrentes en local.
+  if (currentVersion < 11) {
+    await db.execAsync('DROP TABLE IF EXISTS transactions;');
   }
 
   await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION};`);
