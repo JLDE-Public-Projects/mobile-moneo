@@ -14,7 +14,7 @@ import { EmptyTransactions } from '@/components/organisms/EmptyTransactions';
 import { TAB_BAR_SPACE } from '@/screens/main/PlaceholderScreen';
 import { useTransactions } from '@/services/transactions/transaction.queries';
 import { TRANSACTION_FILTERS } from '@/services/transactions/transaction.constants';
-import { TransactionFilter } from '@/services/transactions/transaction.types';
+import { Transaction, TransactionFilter } from '@/services/transactions/transaction.types';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { formatDayMonth, monthLong } from '@/utils/date';
@@ -24,6 +24,8 @@ import { colors, layout, spacing, typography } from '@/theme';
 interface MovementsScreenProps {
   /** Abre la pantalla de Ajustes. */
   onOpenSettings: () => void;
+  /** Abre un movimiento para editarlo o eliminarlo. */
+  onOpenTransaction: (transaction: Transaction) => void;
 }
 
 /**
@@ -34,7 +36,10 @@ interface MovementsScreenProps {
  * formatean con la moneda seleccionada; el egreso va en rojo y el ingreso en
  * verde. Sigue el diseño de la pestaña "Movimientos".
  */
-export function MovementsScreen({ onOpenSettings }: MovementsScreenProps) {
+export function MovementsScreen({
+  onOpenSettings,
+  onOpenTransaction,
+}: MovementsScreenProps) {
   const { data: transactions = [], isLoading, isError, refetch } = useTransactions();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
@@ -133,6 +138,7 @@ export function MovementsScreen({ onOpenSettings }: MovementsScreenProps) {
                       subtitle={`${formatDayMonth(t.date)} · ${t.note || t.account}`}
                       amount={`${t.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(t.amount), currency)}`}
                       income={t.amount > 0}
+                      onPress={() => onOpenTransaction(t)}
                       showSeparator={index < filtered.length - 1}
                     />
                   ))}

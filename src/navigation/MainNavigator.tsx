@@ -17,6 +17,7 @@ import { CategoryDetailScreen } from '@/screens/main/CategoryDetailScreen';
 import { HistoryScreen } from '@/screens/main/HistoryScreen';
 import { RecurringsScreen } from '@/screens/main/RecurringsScreen';
 import { AddTransactionModal } from '@/components/organisms/AddTransactionModal';
+import { Transaction } from '@/services/transactions/transaction.types';
 import { colors } from '@/theme';
 
 /** Identificadores de los tabs principales. */
@@ -56,6 +57,8 @@ export function MainNavigator() {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [detail, setDetail] = useState<DetailScreen>(null);
   const [addOpen, setAddOpen] = useState(false);
+  // Movimiento abierto para editar; null cuando se está registrando uno nuevo.
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   // A dónde volver desde Presupuesto (se abre desde Ajustes o desde Gastos).
   const [budgetReturn, setBudgetReturn] = useState<DetailScreen>(null);
   // Categoría abierta en el detalle (desde Gastos).
@@ -64,6 +67,11 @@ export function MainNavigator() {
   const openBudget = (from: DetailScreen) => {
     setBudgetReturn(from);
     setDetail('budget');
+  };
+
+  const openTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setAddOpen(true);
   };
 
   const openCategory = (name: string) => {
@@ -86,7 +94,12 @@ export function MainNavigator() {
           />
         );
       case 'tx':
-        return <MovementsScreen onOpenSettings={openSettings} />;
+        return (
+          <MovementsScreen
+            onOpenSettings={openSettings}
+            onOpenTransaction={openTransaction}
+          />
+        );
       case 'gastos':
         return (
           <ExpensesScreen
@@ -161,13 +174,22 @@ export function MainNavigator() {
             setDetail(null);
             setActiveTab(id as TabId);
           }}
-          onAdd={() => setAddOpen(true)}
+          onAdd={() => {
+            // El botón siempre registra uno nuevo, aunque antes se hubiera
+            // abierto un movimiento para editarlo.
+            setEditingTransaction(null);
+            setAddOpen(true);
+          }}
         />
       )}
 
       <AddTransactionModal
         visible={addOpen}
-        onClose={() => setAddOpen(false)}
+        transaction={editingTransaction}
+        onClose={() => {
+          setAddOpen(false);
+          setEditingTransaction(null);
+        }}
         // Sin cuentas no se puede registrar nada: se cierra el modal y se lleva
         // al usuario a crear la primera.
         onOpenAccounts={() => {

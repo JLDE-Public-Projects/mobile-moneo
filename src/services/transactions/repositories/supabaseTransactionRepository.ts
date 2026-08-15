@@ -89,4 +89,36 @@ export const supabaseTransactionRepository: TransactionRepository = {
       }
       return toTransaction(data as TransactionRow);
    },
+
+   async update(id, input) {
+      // El disparador del servidor se encarga del saldo: revierte el importe
+      // anterior y aplica el nuevo, incluso si cambió de cuenta.
+      const { data, error } = await supabase
+         .from('transactions')
+         .update({
+            amount: input.amount,
+            category: input.category,
+            category_color: input.categoryColor,
+            note: input.note,
+            account: input.account,
+            account_id: input.accountId,
+            date: new Date(input.date).toISOString(),
+            recurring_id: input.recurringId ?? null,
+         })
+         .eq('id', id)
+         .select(COLUMNS)
+         .single();
+
+      if (error || !data) {
+         throw new Error('No pudimos guardar los cambios.');
+      }
+      return toTransaction(data as TransactionRow);
+   },
+
+   async remove(id) {
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) {
+         throw new Error('No pudimos eliminar el movimiento.');
+      }
+   },
 };

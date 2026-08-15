@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  QueryClient,
   useMutation,
   useQuery,
   useQueryClient,
@@ -36,6 +37,19 @@ export function useTransactions(): UseQueryResult<Transaction[], Error> {
 }
 
 /**
+ * Refresca lo que depende de los movimientos tras crear, editar o eliminar uno.
+ *
+ * Se invalida por prefijo para alcanzar cualquier mes en caché, ya que un
+ * movimiento puede tener fecha de otro mes. Las cuentas también se releen: su
+ * saldo lo ajusta el servidor con cada cambio, y si no se refrescan seguirían
+ * mostrando el importe anterior.
+ */
+function refreshAfterChange(queryClient: QueryClient): void {
+  queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  queryClient.invalidateQueries({ queryKey: ['accounts'] });
+}
+
+/**
  * Mutación para crear un movimiento; refresca la lista al terminar (con lo que
  * se actualizan solos el resumen y los gastos).
  */
@@ -44,13 +58,25 @@ export function useAddTransaction() {
   return useMutation({
     mutationFn: (input: NewTransaction) =>
       getRepositories().transactions.add(input),
-    onSuccess: () => {
-      // Se invalida por prefijo para refrescar cualquier mes en caché: un
-      // movimiento con fecha de otro mes también debe verse reflejado.
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      // El servidor ajusta el saldo de la cuenta al registrar el movimiento,
-      // así que hay que releerlas o seguirían mostrando el saldo anterior.
-      queryClient.invalidateQueries({ queryKey: ['accounts'] });
-    },
+    onSuccess: () => refreshAfterChange(queryClient),
+  });
+}
+
+/** Mutación para editar un movimiento. */
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: NewTransaction }) =>
+      getRepositories().transactions.update(id, input),
+    onSuccess: () => refreshAfterChange(queryClient),
+  });
+}
+
+/** Mutación para eliminar un movimiento. */
+export function useRemoveTransaction() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => getRepositories().transactions.remove(id),
+    onSuccess: () => refreshAfterChange(queryClient),
   });
 }

@@ -19,4 +19,8 @@ export interface TransactionRepository {
   list(range: DateRange): Promise<Transaction[]>;
   /** Crea un movimiento y devuelve el creado. */
   add(input: NewTransaction): Promise<Transaction>;
+  /** Edita un movimiento existente y devuelve el actualizado. */
+  update(id: string, input: NewTransaction): Promise<Transaction>;
+  /** Elimina un movimiento por id. */
+  remove(id: string): Promise<void>;
 }

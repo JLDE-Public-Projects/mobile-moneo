@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Screen } from '@/components/layout/Screen';
 import { ChevronIcon } from '@/components/icons/ChevronIcon';
@@ -10,7 +10,12 @@ import { SelectionSheet, SelectOption } from '@/components/organisms/SelectionSh
 import { useCategories } from '@/services/categories/category.queries';
 import { useAccounts } from '@/services/accounts/account.queries';
 import { accountSubtitle } from '@/services/accounts/account.constants';
-import { useAddTransaction } from '@/services/transactions/transaction.queries';
+import {
+  useAddTransaction,
+  useRemoveTransaction,
+  useUpdateTransaction,
+} from '@/services/transactions/transaction.queries';
+import { Transaction } from '@/services/transactions/transaction.types';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { formatDayMonth } from '@/utils/date';
@@ -19,6 +24,8 @@ import { colors, radius, spacing, typography } from '@/theme';
 interface AddTransactionModalProps {
   /** Si el modal está visible. */
   visible: boolean;
+  /** Movimiento a editar; si falta, el modal registra uno nuevo. */
+  transaction?: Transaction | null;
   /** Cierra el modal. */
   onClose: () => void;
   /** Lleva a la pantalla de cuentas (para crear la primera). */
@@ -44,12 +51,16 @@ const TYPE_OPTIONS: SegmentOption<MovementType>[] = [
  */
 export function AddTransactionModal({
   visible,
+  transaction,
   onClose,
   onOpenAccounts,
 }: AddTransactionModalProps) {
+  const isEditing = Boolean(transaction);
   const { data: categories = [] } = useCategories();
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts();
   const addTransaction = useAddTransaction();
+  const updateTransaction = useUpdateTransaction();
+  const removeTransaction = useRemoveTransaction();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
   const [type, setType] = useState<MovementType>('expense');
@@ -61,17 +72,26 @@ export function AddTransactionModal({
   const [accPickerOpen, setAccPickerOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Al abrir, reiniciamos el formulario (las selecciones vuelven a su defecto).
+  // Al abrir, precargamos el movimiento que se edita o dejamos el formulario
+  // limpio. El importe se edita sin signo: lo pone el tipo al guardar.
   useEffect(() => {
-    if (visible) {
+    if (!visible) return;
+
+    setErrorMessage('');
+    if (transaction) {
+      setType(transaction.amount < 0 ? 'expense' : 'income');
+      setAmount(String(Math.abs(transaction.amount)));
+      setNote(transaction.note);
+      setCategoryName(transaction.category);
+      setAccountName(transaction.account);
+    } else {
       setType('expense');
       setAmount('');
       setNote('');
       setCategoryName('');
       setAccountName('');
-      setErrorMessage('');
     }
-  }, [visible]);
+  }, [visible, transaction]);
 
   // Categorías del tipo actual y selección efectiva (la elegida o la primera).
   const typeCategories = useMemo(
@@ -88,7 +108,10 @@ export function AddTransactionModal({
   // recién creada, así que en vez de dejar "Guardar" apagado sin motivo, se
   // explica y se ofrece el camino para crear la primera.
   const needsAccount = !accountsLoading && accounts.length === 0;
-  const isSaving = addTransaction.isPending;
+  const isSaving =
+    addTransaction.isPending ||
+    updateTransaction.isPending ||
+    removeTransaction.isPending;
   const canSave =
     numericAmount > 0 &&
     Boolean(selectedCategory) &&
@@ -109,17 +132,26 @@ export function AddTransactionModal({
     if (!canSave || !selectedCategory || !selectedAccount) return;
 
     const signed = numericAmount * (type === 'expense' ? -1 : 1);
+    const input = {
+      amount: signed,
+      category: selectedCategory.name,
+      categoryColor: selectedCategory.color,
+      note: note.trim() || selectedCategory.name,
+      account: selectedAccount.name,
+      accountId: selectedAccount.id,
+      // Al editar se conserva la fecha original y el enlace al recurrente que
+      // lo originó: se está corrigiendo el movimiento, no registrando otro.
+      date: transaction?.date ?? Date.now(),
+      recurringId: transaction?.recurringId ?? null,
+    };
+
     setErrorMessage('');
     try {
-      await addTransaction.mutateAsync({
-        amount: signed,
-        category: selectedCategory.name,
-        categoryColor: selectedCategory.color,
-        note: note.trim() || selectedCategory.name,
-        account: selectedAccount.name,
-        accountId: selectedAccount.id,
-        date: Date.now(),
-      });
+      if (transaction) {
+        await updateTransaction.mutateAsync({ id: transaction.id, input });
+      } else {
+        await addTransaction.mutateAsync(input);
+      }
       onClose();
     } catch (error) {
       // El guardado viaja por red y puede fallar: el modal se queda abierto con
@@ -130,6 +162,37 @@ export function AddTransactionModal({
           : 'No pudimos registrar el movimiento. Inténtalo de nuevo.';
       setErrorMessage(message);
     }
+  };
+
+  // Eliminar no se puede deshacer, así que se confirma. El saldo de la cuenta
+  // vuelve a su valor anterior solo: lo revierte el servidor.
+  const handleRemove = () => {
+    if (!transaction) return;
+
+    Alert.alert(
+      '¿Eliminar este movimiento?',
+      'El saldo de la cuenta se ajustará de nuevo.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            setErrorMessage('');
+            try {
+              await removeTransaction.mutateAsync(transaction.id);
+              onClose();
+            } catch (error) {
+              const message =
+                error instanceof Error && error.message
+                  ? error.message
+                  : 'No pudimos eliminar el movimiento.';
+              setErrorMessage(message);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const categoryOptions: SelectOption<string>[] = typeCategories.map((c) => ({
@@ -154,7 +217,9 @@ export function AddTransactionModal({
             <Pressable onPress={onClose} hitSlop={8}>
               <Text style={styles.cancel}>Cancelar</Text>
             </Pressable>
-            <Text style={styles.headerTitle}>Nuevo</Text>
+            <Text style={styles.headerTitle}>
+              {isEditing ? 'Editar' : 'Nuevo'}
+            </Text>
             <Pressable onPress={handleSave} hitSlop={8} disabled={!canSave}>
               <Text style={[styles.save, !canSave && styles.saveDisabled]}>
                 {isSaving ? 'Guardando…' : 'Guardar'}
@@ -221,7 +286,11 @@ export function AddTransactionModal({
 
             <View style={[styles.field, styles.fieldBorder]}>
               <Text style={styles.fieldLabel}>Fecha</Text>
-              <Text style={styles.fieldValue}>Hoy, {formatDayMonth(Date.now())}</Text>
+              <Text style={styles.fieldValue}>
+                {transaction
+                  ? formatDayMonth(transaction.date)
+                  : `Hoy, ${formatDayMonth(Date.now())}`}
+              </Text>
             </View>
 
             <View style={styles.field}>
@@ -242,6 +311,19 @@ export function AddTransactionModal({
                 movimientos.
               </Text>
               <Text style={styles.noticeAction}>Crear una cuenta</Text>
+            </Pressable>
+          )}
+
+          {isEditing && (
+            <Pressable
+              onPress={handleRemove}
+              disabled={isSaving}
+              style={({ pressed }) => [
+                styles.removeRow,
+                pressed && styles.fieldPressed,
+              ]}
+            >
+              <Text style={styles.removeText}>Eliminar movimiento</Text>
             </Pressable>
           )}
 
@@ -387,6 +469,18 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
+  },
+  removeRow: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    marginTop: spacing.lg,
+    paddingVertical: 14,
+  },
+  removeText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.negative,
   },
   notice: {
     backgroundColor: colors.surface,
