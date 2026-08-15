@@ -41,6 +41,23 @@ create policy "own categories delete" on public.categories
   for delete using (auth.uid() = user_id);
 
 -- ============================================================================
+-- Bandera de siembra: distingue "todavía no se sembró" de "el usuario borró
+-- todo a propósito". Antes, seed_default_categories se fijaba en si la tabla
+-- tenía filas para decidir si sembrar, así que borrar todas las categorías
+-- hacía que la próxima lectura las resembrara solas.
+-- ============================================================================
+alter table public.profiles
+  add column if not exists categories_seeded boolean not null default false;
+
+-- Backfill: quien ya tiene categorías hoy, ya fue sembrado en algún momento
+-- (por el trigger o por una lectura anterior), aunque la bandera no existiera
+-- todavía. Sin esto, ese usuario podría resembrarse la próxima vez que borre
+-- todo, que es justo el bug que esta migración corrige.
+update public.profiles p
+set categories_seeded = true
+where exists (select 1 from public.categories c where c.user_id = p.id);
+
+-- ============================================================================
 -- Siembra de categorías por defecto (las del diseño), una sola vez por usuario.
 -- ============================================================================
 create or replace function public.seed_default_categories(p_user uuid)
@@ -50,8 +67,9 @@ security definer
 set search_path = public
 as $$
 begin
-  -- Idempotente: si el usuario ya tiene categorías, no se toca nada.
-  if exists (select 1 from public.categories where user_id = p_user) then
+  -- Idempotente: una vez sembrado para este usuario, no se vuelve a tocar,
+  -- sin importar si luego borró todas sus categorías.
+  if exists (select 1 from public.profiles where id = p_user and categories_seeded) then
     return;
   end if;
 
@@ -71,11 +89,14 @@ begin
     (8, 'Salario',       'income',  '#47944C',       0),
     (9, 'Freelance',     'income',  '#4E9A52',       0)
   ) as d(ord, name, type, color, budget);
+
+  update public.profiles set categories_seeded = true where id = p_user;
 end;
 $$;
 
 -- RPC que la app llama cuando encuentra la lista vacía. Cubre a los usuarios ya
--- registrados antes de existir esta tabla (a los nuevos los siembra el trigger).
+-- registrados antes de existir esta tabla (a los nuevos los siembra el trigger)
+-- y ahora es un no-op si ese usuario ya fue sembrado antes.
 create or replace function public.ensure_default_categories()
 returns void
 language plpgsql
