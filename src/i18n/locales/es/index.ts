@@ -312,6 +312,9 @@ export default {
     logout: 'Cerrar sesión',
     footerNote: 'Sincronizado con tu cuenta de Moneo. Sin conexión bancaria: todo lo registras tú.',
     currencySheetTitle: 'Moneda',
+    language: 'Idioma',
+    languageSheetTitle: 'Idioma',
+    languageSystem: 'Predeterminado del sistema',
   },
 
   profile: {
@@ -362,5 +365,10 @@ export default {
     cop: 'Peso colombiano',
     usd: 'Dólar estadounidense',
     eur: 'Euro',
+  },
+
+  languages: {
+    es: 'Español',
+    en: 'English',
   },
 } as const;

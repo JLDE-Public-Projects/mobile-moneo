@@ -13,7 +13,7 @@ import {TAB_BAR_SPACE} from '@/screens/main/PlaceholderScreen';
 import {SelectionSheet, SelectOption} from '@/components/organisms/SelectionSheet';
 import {useAuthStore} from '@/store/authStore';
 import {signOut} from '@/services/auth/authSession';
-import {useSettingsStore} from '@/store/settingsStore';
+import {LanguagePreference, useSettingsStore} from '@/store/settingsStore';
 import {
    CURRENCIES,
    CurrencyCode,
@@ -60,6 +60,11 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
    const setCurrency = useSettingsStore((state) => state.setCurrency);
    const [currencySheetOpen, setCurrencySheetOpen] = useState(false);
 
+   // Idioma (preferencia global) + hoja de selección.
+   const languagePreference = useSettingsStore((state) => state.languagePreference);
+   const setLanguagePreference = useSettingsStore((state) => state.setLanguagePreference);
+   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
+
    // Estado local de los interruptores (TODO: persistir en preferencias).
    const [faceId, setFaceId] = useState(false);
    const [hideAmounts, setHideAmounts] = useState(false);
@@ -73,6 +78,14 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
       label: t(c.nameKey),
       sub: `${c.code} ${c.symbol} · ${formatNumber(CURRENCY_EXAMPLE, c)}`,
    }));
+
+   // Opciones del selector de idioma: "Predeterminado del sistema" + los soportados.
+   const languageOptions: SelectOption<LanguagePreference>[] = [
+      {value: 'system', label: t('settings.languageSystem')},
+      {value: 'es', label: t('languages.es')},
+      {value: 'en', label: t('languages.en')},
+   ];
+   const languageLabel = languageOptions.find((o) => o.value === languagePreference)?.label ?? '';
 
    return (
       <Screen bottomInset={false}>
@@ -113,7 +126,13 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
                   showSeparator
                />
                <ListRow label={t('settings.categories')} onPress={onOpenCategories} showSeparator/>
-               <ListRow label={t('settings.budget')} onPress={onOpenBudget}/>
+               <ListRow label={t('settings.budget')} onPress={onOpenBudget} showSeparator/>
+               <ListRow
+                  label={t('settings.language')}
+                  detail={languageLabel}
+                  onPress={() => setLanguageSheetOpen(true)}
+                  showChevron={false}
+               />
             </Card>
 
             {/* Privacidad */}
@@ -145,6 +164,16 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
             options={currencyOptions}
             selected={currency}
             onSelect={setCurrency}
+         />
+
+         {/* Selector de idioma */}
+         <SelectionSheet
+            visible={languageSheetOpen}
+            onClose={() => setLanguageSheetOpen(false)}
+            title={t('settings.languageSheetTitle')}
+            options={languageOptions}
+            selected={languagePreference}
+            onSelect={setLanguagePreference}
          />
       </Screen>
    );

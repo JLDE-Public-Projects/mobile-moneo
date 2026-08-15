@@ -18,7 +18,7 @@ const DEFAULT_LANGUAGE: SupportedLanguage = 'es';
  * la primera que coincida con un idioma soportado, y si ninguna coincide se
  * cae al idioma por defecto en vez de a un idioma a medias o inexistente.
  */
-function detectLanguage(): SupportedLanguage {
+export function detectLanguage(): SupportedLanguage {
   const tags = Localization.getLocales();
   for (const tag of tags) {
     const code = tag.languageCode?.toLowerCase();

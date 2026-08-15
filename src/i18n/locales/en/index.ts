@@ -303,6 +303,9 @@ export default {
     logout: 'Sign out',
     footerNote: "Synced with your Moneo account. No bank connection: you record everything yourself.",
     currencySheetTitle: 'Currency',
+    language: 'Language',
+    languageSheetTitle: 'Language',
+    languageSystem: 'System default',
   },
 
   profile: {
@@ -353,5 +356,10 @@ export default {
     cop: 'Colombian peso',
     usd: 'US dollar',
     eur: 'Euro',
+  },
+
+  languages: {
+    es: 'Español',
+    en: 'English',
   },
 } as const;

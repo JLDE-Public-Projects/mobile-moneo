@@ -11,6 +11,7 @@ import {AnimatedSplash} from '@/components/organisms/AnimatedSplash';
 import {QueryProvider} from '@/services/react-query/QueryProvider';
 import {initAuthSession} from '@/services/auth/authSession';
 import {purgeLegacyLocalData} from '@/services/db/database';
+import {loadLanguagePreference} from '@/store/settingsStore';
 import {useLoginMutation, useRegisterMutation} from '@/services/auth/auth.queries';
 import {selectIsAuthenticated, useAuthStore} from '@/store/authStore';
 import {LoginCredentials} from '@/hooks/useLoginForm';
@@ -57,6 +58,13 @@ function AppContent() {
    // dispositivo de versiones anteriores de la app.
    useEffect(() => {
       void purgeLegacyLocalData();
+   }, []);
+
+   // Hasta que responda, el idioma activo es el detectado del dispositivo
+   // (valor inicial de i18n/index.ts), que es lo correcto si no hay preferencia
+   // guardada o esta es "system".
+   useEffect(() => {
+      void loadLanguagePreference();
    }, []);
 
    // Delegamos en las mutaciones y dejamos que el error se propague (el
