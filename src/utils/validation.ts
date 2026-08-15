@@ -38,8 +38,20 @@ export function isValidUsername(value: string): boolean {
   return pattern.test(value);
 }
 
-/** Longitud mínima aceptada de contraseña, reflejada en el placeholder. */
-export const MIN_PASSWORD_LENGTH = 4;
+/**
+ * Longitud mínima aceptada de contraseña, reflejada en el placeholder.
+ *
+ * Debe coincidir con el mínimo que exige Supabase Auth (6 por defecto): si aquí
+ * se aceptara menos, el formulario dejaría enviar claves que el servidor
+ * rechazaría después con `weak_password`.
+ */
+export const MIN_PASSWORD_LENGTH = 6;
+
+/**
+ * Texto de ayuda del campo de clave. Se deriva de la constante para que el
+ * mínimo mostrado y el validado no puedan quedar desincronizados.
+ */
+export const PASSWORD_PLACEHOLDER = `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`;
 
 /** Devuelve true cuando la contraseña cumple la longitud mínima. */
 export function isValidPassword(value: string): boolean {

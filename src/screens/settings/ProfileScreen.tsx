@@ -17,7 +17,12 @@ import { Card } from '@/components/molecules/Card';
 import { InputRow } from '@/components/molecules/InputRow';
 import { useInviteCodeQuery, useUpdateProfile } from '@/services/auth/auth.queries';
 import { useAuthStore } from '@/store/authStore';
-import { isValidName, isValidPassword } from '@/utils/validation';
+import {
+  isValidName,
+  isValidPassword,
+  MIN_PASSWORD_LENGTH,
+  PASSWORD_PLACEHOLDER,
+} from '@/utils/validation';
 import { colors, layout, radius, spacing, typography } from '@/theme';
 
 /** Callbacks de navegación que la pantalla delega en su contenedor. */
@@ -57,7 +62,10 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
       return;
     }
     if (newPassword && !isValidPassword(newPassword)) {
-      setFeedback({ text: 'La nueva clave necesita mínimo 4 caracteres.', ok: false });
+      setFeedback({
+        text: `La nueva clave necesita mínimo ${MIN_PASSWORD_LENGTH} caracteres.`,
+        ok: false,
+      });
       return;
     }
     if (newPassword && !currentPassword) {
@@ -154,7 +162,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             />
             <InputRow
               label="Nueva"
-              placeholder="Mínimo 4 caracteres"
+              placeholder={PASSWORD_PLACEHOLDER}
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}

@@ -17,6 +17,7 @@ import {FormMessage} from '@/components/atoms/FormMessage';
 import {Card} from '@/components/molecules/Card';
 import {InputRow} from '@/components/molecules/InputRow';
 import {useLoginForm, LoginCredentials} from '@/hooks/useLoginForm';
+import {PASSWORD_PLACEHOLDER} from '@/utils/validation';
 import {colors, layout, spacing, typography} from '@/theme';
 
 /** Callbacks de navegación/acción que la pantalla delega en su contenedor. */
@@ -74,7 +75,7 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                      />
                      <InputRow
                         label="Clave"
-                        placeholder="Mínimo 4 caracteres"
+                        placeholder={PASSWORD_PLACEHOLDER}
                         secureTextEntry
                         textContentType="password"
                         value={form.password}

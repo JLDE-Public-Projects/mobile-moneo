@@ -1,8 +1,39 @@
-import type { User } from '@supabase/supabase-js';
+import type { AuthError, User } from '@supabase/supabase-js';
 import { AuthRepository } from '@/services/auth/auth.repository';
 import { AuthSession, AuthUser } from '@/services/auth/auth.types';
 import { supabase } from '@/services/supabase/client';
 import { usernameToEmail } from '@/config/supabase';
+import { MIN_PASSWORD_LENGTH } from '@/utils/validation';
+
+/**
+ * Traduce el error de registro de Supabase a un mensaje accionable.
+ *
+ * Un mensaje genérico deja al usuario sin saber qué corregir, así que los casos
+ * conocidos se identifican por su código (estable) y no por el texto en inglés.
+ */
+function describeSignUpError(error: AuthError): string {
+  switch (error.code) {
+    case 'user_already_exists':
+    case 'email_exists':
+      return 'Ese usuario ya está registrado.';
+    case 'weak_password':
+      return `La clave necesita mínimo ${MIN_PASSWORD_LENGTH} caracteres.`;
+    case 'email_address_invalid':
+      return 'Ese nombre de usuario no es válido. Prueba con otro.';
+    case 'signup_disabled':
+    case 'email_provider_disabled':
+      return 'El registro está deshabilitado en este momento.';
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
+      return 'Demasiados intentos. Espera un momento y vuelve a intentarlo.';
+    default:
+      // El trigger del servidor rechaza códigos de invitación inexistentes.
+      if (error.message.includes('invitación')) {
+        return 'El código de invitación no es válido.';
+      }
+      return 'No pudimos crear tu cuenta. Inténtalo de nuevo.';
+  }
+}
 
 /**
  * Deriva el usuario del dominio a partir del usuario de Supabase.
@@ -52,12 +83,7 @@ export const supabaseAuthRepository: AuthRepository = {
     });
 
     if (error) {
-      // Supabase devuelve este mensaje cuando el email (derivado del usuario) ya
-      // existe: lo traducimos al lenguaje de la app.
-      if (error.message.toLowerCase().includes('already')) {
-        throw new Error('Ese usuario ya está registrado.');
-      }
-      throw new Error('No pudimos crear tu cuenta. Inténtalo de nuevo.');
+      throw new Error(describeSignUpError(error));
     }
 
     // Sin sesión = "Confirm email" está activo en Supabase (incompatible con el

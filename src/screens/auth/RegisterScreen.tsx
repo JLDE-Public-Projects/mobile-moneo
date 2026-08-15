@@ -18,6 +18,7 @@ import {SectionLabel} from '@/components/atoms/SectionLabel';
 import {Card} from '@/components/molecules/Card';
 import {InputRow} from '@/components/molecules/InputRow';
 import {useRegisterForm, RegisterData} from '@/hooks/useRegisterForm';
+import {PASSWORD_PLACEHOLDER} from '@/utils/validation';
 import {colors, layout, spacing, typography} from '@/theme';
 
 /** Callbacks de navegación/acción que la pantalla delega en su contenedor. */
@@ -87,7 +88,7 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
                   />
                   <InputRow
                      label="Clave"
-                     placeholder="Mínimo 4 caracteres"
+                     placeholder={PASSWORD_PLACEHOLDER}
                      secureTextEntry
                      textContentType="newPassword"
                      value={form.password}
