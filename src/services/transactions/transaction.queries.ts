@@ -44,9 +44,13 @@ export function useAddTransaction() {
   return useMutation({
     mutationFn: (input: NewTransaction) =>
       getRepositories().transactions.add(input),
-    // Se invalida por prefijo para refrescar cualquier mes en caché: un
-    // movimiento con fecha de otro mes también debe verse reflejado.
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+    onSuccess: () => {
+      // Se invalida por prefijo para refrescar cualquier mes en caché: un
+      // movimiento con fecha de otro mes también debe verse reflejado.
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      // El servidor ajusta el saldo de la cuenta al registrar el movimiento,
+      // así que hay que releerlas o seguirían mostrando el saldo anterior.
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+    },
   });
 }

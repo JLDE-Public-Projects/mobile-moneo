@@ -13,6 +13,7 @@ import {
   useSetRecurringActive,
 } from '@/services/recurrings/recurring.queries';
 import { Recurring } from '@/services/recurrings/recurring.types';
+import { useAccounts } from '@/services/accounts/account.queries';
 import {
   useAddTransaction,
   useTransactions,
@@ -38,6 +39,7 @@ interface RecurringsScreenProps {
 export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
   const { data: recurrings = [] } = useRecurrings();
   const { data: transactions = [] } = useTransactions();
+  const { data: accounts = [] } = useAccounts();
   const setActive = useSetRecurringActive();
   const addRecurring = useAddRecurring();
   const addTransaction = useAddTransaction();
@@ -74,16 +76,26 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
   const money = (value: number) => `${currency.symbol}${formatNumber(value, currency)}`;
 
   // "Registrar" convierte el recurrente en un movimiento del mes en curso.
-  const register = (r: Recurring) =>
+  //
+  // El recurrente guarda el nombre de la cuenta (todavía es local), así que se
+  // busca la cuenta real para enlazarla: es lo que permite al servidor ajustar
+  // el saldo. Si ese nombre ya no existe, se registra sin enlazar y el saldo no
+  // se toca, en vez de aplicárselo a una cuenta equivocada.
+  const register = (r: Recurring) => {
+    const account = accounts.find((a) => a.name === r.account);
+    if (!account) return;
+
     addTransaction.mutate({
       amount: -r.amount,
       category: r.category,
       categoryColor: r.categoryColor,
       note: r.name,
-      account: r.account,
+      account: account.name,
+      accountId: account.id,
       date: Date.now(),
       recurringId: r.id,
     });
+  };
 
   return (
     <Screen>

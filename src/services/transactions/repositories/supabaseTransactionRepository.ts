@@ -10,6 +10,7 @@ interface TransactionRow {
    category_color: string;
    note: string;
    account: string;
+   account_id: string | null;
    date: string;
    recurring_id: string | null;
    created_at: string;
@@ -17,7 +18,7 @@ interface TransactionRow {
 
 /** Columnas que pedimos siempre (evita traer `user_id`, que no usa la UI). */
 const COLUMNS =
-   'id, amount, category, category_color, note, account, date, recurring_id, created_at';
+   'id, amount, category, category_color, note, account, account_id, date, recurring_id, created_at';
 
 /**
  * Convierte una fila al modelo del dominio.
@@ -32,6 +33,7 @@ function toTransaction(row: TransactionRow): Transaction {
       categoryColor: row.category_color,
       note: row.note,
       account: row.account,
+      accountId: row.account_id,
       date: new Date(row.date).getTime(),
       recurringId: row.recurring_id,
       createdAt: new Date(row.created_at).getTime(),
@@ -75,6 +77,7 @@ export const supabaseTransactionRepository: TransactionRepository = {
             category_color: input.categoryColor,
             note: input.note,
             account: input.account,
+            account_id: input.accountId,
             date: new Date(input.date).toISOString(),
             recurring_id: input.recurringId ?? null,
          })

@@ -21,8 +21,14 @@ export interface Transaction {
   categoryColor: string;
   /** Nota / descripción del movimiento. */
   note: string;
-  /** Nombre de la cuenta. */
+  /** Nombre de la cuenta (desnormalizado, para mostrarlo sin consultas). */
   account: string;
+  /**
+   * Cuenta a la que afecta, o null si esa cuenta se eliminó. Es la referencia
+   * con la que el servidor mantiene el saldo, y por eso no puede ser el nombre:
+   * las cuentas se pueden renombrar.
+   */
+  accountId: string | null;
   /** Fecha del movimiento (timestamp). */
   date: number;
   /** Id del recurrente que lo originó (o null si es un movimiento suelto). */
@@ -37,6 +43,8 @@ export interface NewTransaction {
   categoryColor: string;
   note: string;
   account: string;
+  /** Cuenta a la que afecta; el servidor la usa para ajustar el saldo. */
+  accountId: string;
   date: number;
   /** Recurrente que lo origina, si aplica. */
   recurringId?: string | null;
