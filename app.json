@@ -37,6 +37,12 @@
       ],
       "expo-sqlite",
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "4224dffa-4995-4776-a64c-6722524ffdd2"
+      }
+    },
+    "owner": "jaderdiaz"
   }
 }
