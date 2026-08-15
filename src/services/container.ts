@@ -7,7 +7,7 @@ import { supabaseAccountRepository } from '@/services/accounts/repositories/supa
 import { TransactionRepository } from '@/services/transactions/transaction.repository';
 import { supabaseTransactionRepository } from '@/services/transactions/repositories/supabaseTransactionRepository';
 import { RecurringRepository } from '@/services/recurrings/recurring.repository';
-import { sqliteRecurringRepository } from '@/services/recurrings/repositories/sqliteRecurringRepository';
+import { supabaseRecurringRepository } from '@/services/recurrings/repositories/supabaseRecurringRepository';
 
 /**
  * Conjunto de repositorios que usa la app (raíz de composición / contenedor de
@@ -28,20 +28,19 @@ interface AppRepositories {
  * Implementaciones activas. Este es el ÚNICO lugar que decide, para toda la
  * app, qué implementación concreta se usa para cada contrato.
  *
- * Hoy el almacenamiento es local (SQLite). Para migrar a una API externa basta
+ * Hoy todo se guarda en Supabase. Para cambiar de proveedor basta
  * con cambiar la implementación aquí —o llamar a {@link configureRepositories}
  * en el arranque— sin tocar pantallas ni hooks:
  *
  *   configureRepositories({ auth: apiAuthRepository });
  */
 let repositories: AppRepositories = {
-  // Todo en Supabase salvo los recurrentes, que siguen en SQLite local hasta
-  // migrar también esa parte.
+  // Toda la persistencia vive ya en Supabase.
   auth: supabaseAuthRepository,
   categories: supabaseCategoryRepository,
   accounts: supabaseAccountRepository,
   transactions: supabaseTransactionRepository,
-  recurrings: sqliteRecurringRepository,
+  recurrings: supabaseRecurringRepository,
 };
 
 /** Devuelve los repositorios activos para que los consumidores los usen. */

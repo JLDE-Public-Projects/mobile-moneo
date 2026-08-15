@@ -28,12 +28,46 @@ export function useAddRecurring() {
   });
 }
 
+/** Mutación para editar un recurrente. */
+export function useUpdateRecurring() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: NewRecurring }) =>
+      getRepositories().recurrings.update(id, input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: RECURRINGS_KEY }),
+  });
+}
+
+/**
+ * Mutación para ajustar el importe previsto.
+ *
+ * Se usa al registrar con un valor distinto al previsto: el recurrente aprende
+ * el importe nuevo para que la próxima vez venga ya con ese valor.
+ */
+export function useUpdateRecurringAmount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, amount }: { id: string; amount: number }) =>
+      getRepositories().recurrings.updateAmount(id, amount),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: RECURRINGS_KEY }),
+  });
+}
+
 /** Mutación para activar o pausar un recurrente. */
 export function useSetRecurringActive() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) =>
       getRepositories().recurrings.setActive(id, active),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: RECURRINGS_KEY }),
+  });
+}
+
+/** Mutación para eliminar un recurrente. */
+export function useRemoveRecurring() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => getRepositories().recurrings.remove(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: RECURRINGS_KEY }),
   });
 }

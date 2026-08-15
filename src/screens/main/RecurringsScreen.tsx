@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
@@ -7,10 +7,12 @@ import { SectionLabel } from '@/components/atoms/SectionLabel';
 import { Card } from '@/components/molecules/Card';
 import { AddRow } from '@/components/molecules/AddRow';
 import { NewRecurringSheet } from '@/components/organisms/NewRecurringSheet';
+import { ConfirmRecurringSheet } from '@/components/organisms/ConfirmRecurringSheet';
 import {
   useAddRecurring,
   useRecurrings,
   useSetRecurringActive,
+  useUpdateRecurringAmount,
 } from '@/services/recurrings/recurring.queries';
 import { Recurring } from '@/services/recurrings/recurring.types';
 import { useAccounts } from '@/services/accounts/account.queries';
@@ -19,7 +21,7 @@ import {
   useTransactions,
 } from '@/services/transactions/transaction.queries';
 import { useSettingsStore } from '@/store/settingsStore';
-import { formatNumber, getCurrency } from '@/config/currencies';
+import { formatMoney, formatNumber, getCurrency } from '@/config/currencies';
 import { colors, layout, radius, spacing, typography } from '@/theme';
 
 /** Callbacks de navegación que la pantalla delega en su contenedor. */
@@ -29,12 +31,15 @@ interface RecurringsScreenProps {
 }
 
 /**
- * Pantalla de "Pagos Recurrentes".
+ * Pantalla de "Recurrentes".
  *
- * Separa los recurrentes activos en "Por pagar" (aún sin registrar este mes) y
- * "Pagadas este mes" (ya convertidas en movimiento), más los pausados. Un pago
- * se considera hecho si existe un movimiento de este mes enlazado al recurrente.
- * "Registrar" crea ese movimiento; "Pausar/Reanudar" activa o desactiva.
+ * Reúne los movimientos que se repiten cada mes, sean gastos fijos o ingresos
+ * como el salario. Separa los activos en "Por pagar" (aún sin registrar este
+ * mes) y "Pagadas este mes", más los pausados; uno se considera hecho si existe
+ * un movimiento de este mes enlazado a él.
+ *
+ * "Registrar" no crea el movimiento de inmediato: abre la confirmación del
+ * importe, porque el previsto es una estimación que suele variar.
  */
 export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
   const { data: recurrings = [] } = useRecurrings();
@@ -42,10 +47,13 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
   const { data: accounts = [] } = useAccounts();
   const setActive = useSetRecurringActive();
   const addRecurring = useAddRecurring();
+  const updateAmount = useUpdateRecurringAmount();
   const addTransaction = useAddTransaction();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
   const [sheetVisible, setSheetVisible] = useState(false);
+  // Recurrente cuyo importe se está confirmando antes de registrarlo.
+  const [confirming, setConfirming] = useState<Recurring | null>(null);
 
   // Ids de recurrentes ya pagados en el mes en curso.
   const paidThisMonth = useMemo(() => {
@@ -70,31 +78,59 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
     .filter((r) => paidThisMonth.has(r.id))
     .sort((a, b) => a.day - b.day);
 
+  // Neto de los recurrentes activos: los ingresos suman y los egresos restan,
+  // porque ahora conviven ambos. Negativo significa que salen más de los que
+  // entran, que es lo normal.
   const monthly = active.reduce((sum, r) => sum + r.amount, 0);
   const today = new Date().getDate();
 
   const money = (value: number) => `${currency.symbol}${formatNumber(value, currency)}`;
 
-  // "Registrar" convierte el recurrente en un movimiento del mes en curso.
-  //
-  // El recurrente guarda el nombre de la cuenta (todavía es local), así que se
-  // busca la cuenta real para enlazarla: es lo que permite al servidor ajustar
-  // el saldo. Si ese nombre ya no existe, se registra sin enlazar y el saldo no
-  // se toca, en vez de aplicárselo a una cuenta equivocada.
-  const register = (r: Recurring) => {
-    const account = accounts.find((a) => a.name === r.account);
-    if (!account) return;
+  /**
+   * Abre la confirmación, salvo que el recurrente haya perdido su cuenta.
+   *
+   * Si la cuenta se eliminó, registrarlo crearía un movimiento que no movería
+   * ningún saldo, y en silencio. Es preferible decirlo y que el usuario decida.
+   */
+  const startRegister = (r: Recurring) => {
+    if (!r.accountId) {
+      Alert.alert(
+        'Falta la cuenta',
+        `La cuenta de "${r.name}" ya no existe. Edita el recurrente y elige una para poder registrarlo.`,
+      );
+      return;
+    }
+    setConfirming(r);
+  };
 
-    addTransaction.mutate({
-      amount: -r.amount,
+  /**
+   * Confirma el registro con el importe que decida el usuario.
+   *
+   * El importe del recurrente es una previsión: la factura de luz varía y el
+   * salario puede traer una prima, así que se registra lo confirmado y, si
+   * cambió, el recurrente lo aprende para la próxima vez.
+   */
+  const confirmRegister = async (r: Recurring, confirmed: number) => {
+    if (!r.accountId) return;
+
+    // El signo lo marca el recurrente: negativo si es egreso, positivo si es
+    // ingreso. La hoja solo devuelve la magnitud.
+    const signed = r.amount < 0 ? -confirmed : confirmed;
+
+    await addTransaction.mutateAsync({
+      amount: signed,
       category: r.category,
       categoryColor: r.categoryColor,
       note: r.name,
-      account: account.name,
-      accountId: account.id,
+      account: r.account,
+      accountId: r.accountId,
       date: Date.now(),
       recurringId: r.id,
     });
+
+    if (signed !== r.amount) {
+      await updateAmount.mutateAsync({ id: r.id, amount: signed });
+    }
   };
 
   return (
@@ -107,18 +143,22 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         <View style={styles.backRow}>
           <BackLink label="Atrás" onPress={onBack} />
         </View>
-        <Text style={styles.title}>Pagos Recurrentes</Text>
+        <Text style={styles.title}>Recurrentes</Text>
 
         {/* Totales */}
         <View style={styles.totalsCard}>
           <View style={styles.totalCol}>
             <Text style={styles.totalLabel}>Al mes</Text>
-            <Text style={styles.totalValue}>{money(monthly)}</Text>
+            <Text style={[styles.totalValue, monthly < 0 && styles.totalNegative]}>
+              {formatMoney(monthly, currency)}
+            </Text>
           </View>
           <View style={styles.totalsDivider} />
           <View style={[styles.totalCol, styles.totalColRight]}>
             <Text style={styles.totalLabel}>Al año</Text>
-            <Text style={styles.totalValue}>{money(monthly * 12)}</Text>
+            <Text style={[styles.totalValue, monthly < 0 && styles.totalNegative]}>
+              {formatMoney(monthly * 12, currency)}
+            </Text>
           </View>
         </View>
 
@@ -148,9 +188,11 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                     </Pressable>
                   </View>
                 </View>
-                <Text style={styles.amount}>{money(r.amount)}</Text>
+                <Text style={[styles.amount, r.amount > 0 && styles.amountIncome]}>
+                  {money(Math.abs(r.amount))}
+                </Text>
                 <Pressable
-                  onPress={() => register(r)}
+                  onPress={() => startRegister(r)}
                   style={({ pressed }) => [styles.action, pressed && styles.pressed]}
                 >
                   <Text style={styles.actionText}>Registrar</Text>
@@ -182,7 +224,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                     </Text>
                     <Text style={styles.sub}>Pagado el día {r.day}</Text>
                   </View>
-                  <Text style={styles.amountMuted}>{money(r.amount)}</Text>
+                  <Text style={styles.amountMuted}>{money(Math.abs(r.amount))}</Text>
                   <Text style={styles.check}>✓</Text>
                 </View>
               ))}
@@ -207,7 +249,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                     </Text>
                     <Text style={styles.subMuted}>Cada día {r.day}</Text>
                   </View>
-                  <Text style={styles.amountMuted}>{money(r.amount)}</Text>
+                  <Text style={styles.amountMuted}>{money(Math.abs(r.amount))}</Text>
                   <Pressable
                     onPress={() => setActive.mutate({ id: r.id, active: true })}
                     style={({ pressed }) => [styles.resume, pressed && styles.pressed]}
@@ -231,6 +273,14 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         visible={sheetVisible}
         onClose={() => setSheetVisible(false)}
         onCreate={(input) => addRecurring.mutateAsync(input).then(() => undefined)}
+      />
+
+      <ConfirmRecurringSheet
+        recurring={confirming}
+        onClose={() => setConfirming(null)}
+        onConfirm={(amount) =>
+          confirming ? confirmRegister(confirming, amount) : Promise.resolve()
+        }
       />
     </Screen>
   );
@@ -281,6 +331,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginTop: 2,
     fontVariant: ['tabular-nums'],
+  },
+  totalNegative: {
+    color: colors.negative,
   },
   sectionSpacing: {
     paddingTop: spacing.xl,
@@ -339,6 +392,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
+  },
+  amountIncome: {
+    color: colors.positive,
   },
   amountMuted: {
     ...typography.body,

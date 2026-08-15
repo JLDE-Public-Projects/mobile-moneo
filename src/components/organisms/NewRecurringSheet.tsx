@@ -5,10 +5,18 @@ import { Button } from '@/components/atoms/Button';
 import { FormMessage } from '@/components/atoms/FormMessage';
 import { ChevronIcon } from '@/components/icons/ChevronIcon';
 import { SelectionSheet, SelectOption } from '@/components/organisms/SelectionSheet';
+import { SegmentedControl, SegmentOption } from '@/components/molecules/SegmentedControl';
 import { useCategories } from '@/services/categories/category.queries';
+import { CategoryType } from '@/services/categories/category.types';
 import { useAccounts } from '@/services/accounts/account.queries';
 import { NewRecurring } from '@/services/recurrings/recurring.types';
 import { colors, radius, spacing, typography } from '@/theme';
+
+/** Un recurrente puede ser un gasto fijo o un ingreso, como el salario. */
+const RECURRING_TYPE_OPTIONS: SegmentOption<CategoryType>[] = [
+  { value: 'expense', label: 'Egreso' },
+  { value: 'income', label: 'Ingreso' },
+];
 
 interface NewRecurringSheetProps {
   /** Si la hoja está visible. */
@@ -32,34 +40,47 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
   const { data: categories = [] } = useCategories();
   const { data: accounts = [] } = useAccounts();
 
+  const [type, setType] = useState<CategoryType>('expense');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [day, setDay] = useState('');
   const [categoryName, setCategoryName] = useState('');
+  const [accountName, setAccountName] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [accountPickerOpen, setAccountPickerOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (visible) {
+      setType('expense');
       setName('');
       setAmount('');
       setDay('');
       setCategoryName('');
+      setAccountName('');
       setErrorMessage('');
     }
   }, [visible]);
 
-  const expenseCategories = categories.filter((c) => c.type === 'expense');
+  // Las categorías se acotan al tipo elegido: un salario no encaja en "Mercado".
+  const typeCategories = categories.filter((c) => c.type === type);
   const selectedCategory =
-    expenseCategories.find((c) => c.name === categoryName) ?? expenseCategories[0];
-  const defaultAccount = accounts[0];
+    typeCategories.find((c) => c.name === categoryName) ?? typeCategories[0];
+  const selectedAccount =
+    accounts.find((a) => a.name === accountName) ?? accounts[0];
+
+  const handleChangeType = (next: CategoryType) => {
+    setType(next);
+    // La categoría vuelve a la primera del nuevo tipo.
+    setCategoryName('');
+  };
 
   const canSave = name.trim().length > 0 && Number(amount) > 0 && Number(day) > 0;
 
   const handleSave = async () => {
     if (isSubmitting) return;
-    if (!canSave || !selectedCategory || !defaultAccount) {
+    if (!canSave || !selectedCategory || !selectedAccount) {
       setErrorMessage('Completa nombre, monto y día.');
       return;
     }
@@ -68,11 +89,13 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
     try {
       await onCreate({
         name: name.trim(),
-        amount: Number(amount),
+        // El importe se guarda con signo, igual que en los movimientos.
+        amount: type === 'expense' ? -Number(amount) : Number(amount),
         day: Math.min(31, Math.max(1, Number(day))),
         category: selectedCategory.name,
         categoryColor: selectedCategory.color,
-        account: defaultAccount.name,
+        account: selectedAccount.name,
+        accountId: selectedAccount.id,
       });
       onClose();
     } catch (error) {
@@ -86,15 +109,29 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
     }
   };
 
-  const categoryOptions: SelectOption<string>[] = expenseCategories.map((c) => ({
+  const categoryOptions: SelectOption<string>[] = typeCategories.map((c) => ({
     value: c.name,
     label: c.name,
     color: c.color,
   }));
+  const accountOptions: SelectOption<string>[] = accounts.map((a) => ({
+    value: a.name,
+    label: a.name,
+    color: a.color,
+  }));
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text style={styles.title}>Nueva recurrente</Text>
+      <Text style={styles.title}>Nuevo recurrente</Text>
+
+      {/* Egreso o ingreso: un salario también se repite cada mes. */}
+      <View style={styles.segment}>
+        <SegmentedControl
+          options={RECURRING_TYPE_OPTIONS}
+          value={type}
+          onChange={handleChangeType}
+        />
+      </View>
 
       <View style={styles.card}>
         <View style={styles.row}>
@@ -140,10 +177,19 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
 
         <Pressable
           onPress={() => setPickerOpen(true)}
-          style={({ pressed }) => [styles.row, styles.rowLast, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.row, pressed && styles.pressed]}
         >
           <Text style={styles.label}>Categoría</Text>
           <Text style={styles.value}>{selectedCategory?.name ?? '—'}</Text>
+          <ChevronIcon />
+        </Pressable>
+
+        <Pressable
+          onPress={() => setAccountPickerOpen(true)}
+          style={({ pressed }) => [styles.row, styles.rowLast, pressed && styles.pressed]}
+        >
+          <Text style={styles.label}>Cuenta</Text>
+          <Text style={styles.value}>{selectedAccount?.name ?? '—'}</Text>
           <ChevronIcon />
         </Pressable>
       </View>
@@ -165,6 +211,15 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
         selected={selectedCategory?.name ?? ''}
         onSelect={setCategoryName}
       />
+
+      <SelectionSheet
+        visible={accountPickerOpen}
+        onClose={() => setAccountPickerOpen(false)}
+        title="Cuenta"
+        options={accountOptions}
+        selected={selectedAccount?.name ?? ''}
+        onSelect={setAccountName}
+      />
     </BottomSheet>
   );
 }
@@ -177,6 +232,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     paddingHorizontal: spacing.xs,
     paddingBottom: spacing.md,
+  },
+  segment: {
+    marginBottom: spacing.md,
   },
   card: {
     backgroundColor: colors.surface,
