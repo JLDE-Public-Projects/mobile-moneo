@@ -27,22 +27,25 @@ interface AuthFlowProps {
  * queda debajo se desmonta para no retener estado ni capturar toques.
  */
 export function AuthFlow({onLogin, onRegister, onBiometricLogin}: AuthFlowProps) {
+
    const [screen, setScreen] = useState<AuthScreen>('login');
+
    // Progreso 0 = login visible, 1 = registro visible.
    const progress = useRef(new Animated.Value(0)).current;
+
    // Controla qué pantallas se montan (ambas solo durante la transición).
-   const [showLogin, setShowLogin] = useState(true);
-   const [showRegister, setShowRegister] = useState(false);
+         const [showLogin, setShowLogin] = useState(true);
+         const [showRegister, setShowRegister] = useState(false);
 
-   useEffect(() => {
-      const goingToRegister = screen === 'register';
+         useEffect(() => {
+         const goingToRegister = screen === 'register';
 
-      // Aseguramos que la pantalla destino esté montada antes de animar.
-      if (goingToRegister) setShowRegister(true);
-      else setShowLogin(true);
+         // Aseguramos que la pantalla destino esté montada antes de animar.
+         if (goingToRegister) setShowRegister(true);
+         else setShowLogin(true);
 
-      const animation = Animated.timing(progress, {
-         toValue: goingToRegister ? 1 : 0,
+         const animation = Animated.timing(progress, {
+            toValue: goingToRegister ? 1 : 0,
          duration: 340,
          easing: Easing.inOut(Easing.cubic),
          useNativeDriver: true,
