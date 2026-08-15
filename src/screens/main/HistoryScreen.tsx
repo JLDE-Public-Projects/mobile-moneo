@@ -1,18 +1,20 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Card } from '@/components/molecules/Card';
-import { useTransactions } from '@/services/transactions/transaction.queries';
+import { QueryState } from '@/components/molecules/QueryState';
+import { useMonthlyHistory } from '@/services/transactions/transaction.queries';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatMoney, formatNumber, getCurrency } from '@/config/currencies';
-import { PAST_MONTHS, MonthSummary } from '@/config/history';
-import { formatMonthYear, monthShort } from '@/utils/date';
 import { colors, layout, spacing, typography } from '@/theme';
 
 /** Alto máximo (px) de las barras del gráfico. */
 const BAR_MAX = 78;
+
+/** Meses que se muestran como máximo, contando el actual. */
+const MONTHS_SHOWN = 6;
 
 /** Callbacks de navegación que la pantalla delega en su contenedor. */
 interface HistoryScreenProps {
@@ -23,31 +25,18 @@ interface HistoryScreenProps {
 /**
  * Pantalla de "Historial".
  *
- * Muestra el balance mensual de los últimos meses: los ya cerrados vienen de
- * datos guardados y el mes en curso se calcula en vivo desde los movimientos.
- * Un gráfico de barras y una lista con ingresos, egresos y balance por mes.
+ * Muestra el balance de los últimos meses, calculado desde los movimientos: un
+ * gráfico de barras y una lista con ingresos, egresos y balance de cada mes.
+ * Solo aparecen los meses desde el primer movimiento registrado.
  */
 export function HistoryScreen({ onBack }: HistoryScreenProps) {
-  const { data: transactions = [] } = useTransactions();
+  const {
+    data: months = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useMonthlyHistory(MONTHS_SHOWN);
   const currency = getCurrency(useSettingsStore((state) => state.currency));
-
-  // Mes en curso (agosto) desde los movimientos + meses cerrados.
-  const months: MonthSummary[] = useMemo(() => {
-    const income = transactions
-      .filter((t) => t.amount > 0)
-      .reduce((sum, t) => sum + t.amount, 0);
-    const expense = transactions
-      .filter((t) => t.amount < 0)
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-    const now = Date.now();
-    const current: MonthSummary = {
-      name: formatMonthYear(now),
-      short: monthShort(now),
-      income,
-      expense,
-    };
-    return [...PAST_MONTHS, current];
-  }, [transactions]);
 
   const maxBalance = Math.max(
     1,
@@ -66,17 +55,25 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
         </View>
         <Text style={styles.title}>Historial</Text>
 
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          errorText="No pudimos cargar tu historial."
+        >
         {/* Gráfico de balance por mes */}
         <View style={styles.chartCard}>
           <Text style={styles.chartLabel}>
-            Balance por mes · {months.length} meses
+            {months.length === 1
+              ? 'Balance del mes'
+              : `Balance por mes · ${months.length} meses`}
           </Text>
           <View style={styles.chart}>
             {months.map((m) => {
               const balance = m.income - m.expense;
               const height = Math.max(6, (Math.abs(balance) / maxBalance) * BAR_MAX);
               return (
-                <View key={m.name} style={styles.barColumn}>
+                <View key={m.start} style={styles.barColumn}>
                   <View
                     style={[
                       styles.bar,
@@ -103,7 +100,7 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
               const balance = m.income - m.expense;
               return (
                 <View
-                  key={m.name}
+                  key={m.start}
                   style={[styles.row, index < arr.length - 1 && styles.separator]}
                 >
                   <View style={styles.info}>
@@ -125,6 +122,7 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
               );
             })}
         </Card>
+        </QueryState>
       </ScrollView>
     </Screen>
   );

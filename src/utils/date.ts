@@ -78,3 +78,38 @@ export function monthRange(timestamp: number = Date.now()): DateRange {
   const to = new Date(date.getFullYear(), date.getMonth() + 1, 1).getTime();
   return { from, to };
 }
+
+/**
+ * Intervalo que cubre los últimos `count` meses, incluido el actual.
+ *
+ * Se apoya en que `Date` normaliza los meses fuera de rango: restar seis a
+ * enero devuelve julio del año anterior sin tener que calcularlo aparte.
+ */
+export function lastMonthsRange(
+  count: number,
+  timestamp: number = Date.now(),
+): DateRange {
+  const date = new Date(timestamp);
+  return {
+    from: new Date(date.getFullYear(), date.getMonth() - (count - 1), 1).getTime(),
+    to: new Date(date.getFullYear(), date.getMonth() + 1, 1).getTime(),
+  };
+}
+
+/**
+ * Comienzos de los últimos `count` meses, del más antiguo al actual.
+ *
+ * Sirven de eje del histórico: al recorrerlos se obtienen también los meses sin
+ * movimientos, que deben aparecer en cero y no desaparecer del gráfico.
+ */
+export function lastMonthStarts(
+  count: number,
+  timestamp: number = Date.now(),
+): number[] {
+  const date = new Date(timestamp);
+  const starts: number[] = [];
+  for (let i = count - 1; i >= 0; i -= 1) {
+    starts.push(new Date(date.getFullYear(), date.getMonth() - i, 1).getTime());
+  }
+  return starts;
+}

@@ -10,6 +10,20 @@
 /** Filtro de la lista de movimientos. */
 export type TransactionFilter = 'all' | 'expense' | 'income';
 
+/** Ingresos y egresos de un mes, para el histórico. */
+export interface MonthSummary {
+  /** Comienzo del mes (timestamp), que lo identifica. */
+  start: number;
+  /** Nombre largo, p. ej. "Marzo 2026". */
+  name: string;
+  /** Abreviatura para el eje del gráfico, p. ej. "mar". */
+  short: string;
+  /** Suma de ingresos del mes. */
+  income: number;
+  /** Suma de egresos del mes, en positivo. */
+  expense: number;
+}
+
 /** Movimiento almacenado. */
 export interface Transaction {
   id: string;
