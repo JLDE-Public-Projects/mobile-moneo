@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.genus.moneo"
+      "bundleIdentifier": "com.genus.moneo",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.genus.moneo",
@@ -35,7 +38,6 @@
           "imageWidth": 180
         }
       ],
-      "expo-sqlite",
       "expo-font",
       "expo-localization"
     ],
