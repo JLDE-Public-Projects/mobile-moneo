@@ -142,6 +142,8 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
                {t('settings.footerNote')}
             </Text>
 
+            <AppFooter/>
+
          </ScrollView>
 
          {/* Selector de moneda */}

@@ -11,6 +11,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { AppFooter } from '@/components/atoms/AppFooter';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Button } from '@/components/atoms/Button';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
@@ -210,6 +211,8 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           <Text style={styles.note}>
             {t('profile.inviteNote')}
           </Text>
+
+          <AppFooter />
         </ScrollView>
       </KeyboardAvoidingView>
     </Screen>

@@ -11,6 +11,7 @@ import {
 import {StatusBar} from 'expo-status-bar';
 import {useTranslation} from 'react-i18next';
 import {Screen} from '@/components/layout/Screen';
+import {AppFooter} from '@/components/atoms/AppFooter';
 import {BrandMark} from '@/components/atoms/BrandMark';
 import {Button} from '@/components/atoms/Button';
 import {FadeInUp} from '@/components/atoms/FadeInUp';
@@ -28,8 +29,6 @@ interface LoginScreenProps {
    onLogin: (credentials: LoginCredentials) => Promise<void>;
    /** Navega al flujo de registro. */
    onRegister?: () => void;
-   /** Dispara el inicio de sesión biométrico (Face ID). */
-   onBiometricLogin?: () => void;
 }
 
 // Retraso base entre elementos para la entrada escalonada (en ms).
@@ -40,11 +39,11 @@ const STAGGER = 70;
  * {@link useLoginForm}.
  *
  * Sigue el diseño: cabecera de marca centrada, tarjeta de credenciales, ranura
- * de error, acciones primaria y biométrica y enlace a registro. Los bloques
- * aparecen de forma escalonada con {@link FadeInUp} para dar sensación de vida
- * al abrir la app.
+ * de error, acción principal y enlace a registro. Los bloques aparecen de
+ * forma escalonada con {@link FadeInUp} para dar sensación de vida al abrir
+ * la app.
  */
-export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreenProps) {
+export function LoginScreen({onLogin, onRegister}: LoginScreenProps) {
    const {t} = useTranslation();
    const months = useMonthNames();
    const currentMonthName = months.long[new Date().getMonth()].toLowerCase();
@@ -104,20 +103,8 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                   />
                </FadeInUp>
 
-               {/* Acción biométrica */}
-               <FadeInUp delay={STAGGER * 3}>
-                  <Button
-                     label={t('auth.login.biometric')}
-                     variant="secondary"
-                     onPress={onBiometricLogin ?? (() => {
-                     })}
-                     style={styles.biometricButton}
-                     leading={<View style={styles.biometricIcon}/>}
-                  />
-               </FadeInUp>
-
                {/* Enlace a registro */}
-               <FadeInUp delay={STAGGER * 4} style={styles.registerRow}>
+               <FadeInUp delay={STAGGER * 3} style={styles.registerRow}>
                   <Text style={styles.mutedText}>{t('auth.login.firstTime')}</Text>
                   <Pressable onPress={onRegister} hitSlop={8}>
                      <Text style={styles.link}>{t('auth.login.createAccount')}</Text>
@@ -129,6 +116,8 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                <Text style={styles.legal}>
                   {t('auth.legalLogin')}
                </Text>
+
+               <AppFooter/>
             </ScrollView>
          </KeyboardAvoidingView>
       </Screen>
@@ -161,16 +150,6 @@ const styles = StyleSheet.create({
    },
    form: {
       marginTop: spacing.xxxl,
-   },
-   biometricButton: {
-      marginTop: spacing.md,
-   },
-   biometricIcon: {
-      width: 19,
-      height: 19,
-      borderRadius: 5,
-      borderWidth: 2,
-      borderColor: colors.accent,
    },
    registerRow: {
       flexDirection: 'row',

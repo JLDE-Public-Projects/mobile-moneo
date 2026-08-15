@@ -14,8 +14,6 @@ interface AuthFlowProps {
    onLogin: (credentials: LoginCredentials) => Promise<void>;
    /** Crea la cuenta; lanza para mostrar un error. */
    onRegister: (data: RegisterData) => Promise<void>;
-   /** Inicio de sesión biométrico (Face ID). */
-   onBiometricLogin?: () => void;
 }
 
 /**
@@ -26,7 +24,7 @@ interface AuthFlowProps {
  * sin dependencias de navegación. Al terminar la animación, la pantalla que
  * queda debajo se desmonta para no retener estado ni capturar toques.
  */
-export function AuthFlow({onLogin, onRegister, onBiometricLogin}: AuthFlowProps) {
+export function AuthFlow({onLogin, onRegister}: AuthFlowProps) {
 
    const [screen, setScreen] = useState<AuthScreen>('login');
 
@@ -100,7 +98,6 @@ export function AuthFlow({onLogin, onRegister, onBiometricLogin}: AuthFlowProps)
             >
                <LoginScreen
                   onLogin={onLogin}
-                  onBiometricLogin={onBiometricLogin}
                   onRegister={() => setScreen('register')}
                />
             </Animated.View>

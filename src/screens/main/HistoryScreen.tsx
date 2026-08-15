@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { AppFooter } from '@/components/atoms/AppFooter';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Card } from '@/components/molecules/Card';
 import { QueryState } from '@/components/molecules/QueryState';
@@ -125,6 +126,8 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
             })}
         </Card>
         </QueryState>
+
+        <AppFooter />
       </ScrollView>
     </Screen>
   );

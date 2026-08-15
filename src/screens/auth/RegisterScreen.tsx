@@ -10,6 +10,7 @@ import {
 import {StatusBar} from 'expo-status-bar';
 import {useTranslation} from 'react-i18next';
 import {Screen} from '@/components/layout/Screen';
+import {AppFooter} from '@/components/atoms/AppFooter';
 import {BackLink} from '@/components/atoms/BackLink';
 import {BrandMark} from '@/components/atoms/BrandMark';
 import {Button} from '@/components/atoms/Button';
@@ -135,6 +136,8 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
             <Text style={styles.legal}>
                {t('auth.legalRegister')}
             </Text>
+
+            <AppFooter/>
          </ScrollView>
       </KeyboardAvoidingView>
    </Screen>

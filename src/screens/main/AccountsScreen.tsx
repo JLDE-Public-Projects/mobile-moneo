@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { AppFooter } from '@/components/atoms/AppFooter';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
 import { SettingsIcon } from '@/components/icons/SettingsIcon';
@@ -117,6 +118,8 @@ export function AccountsScreen({ onOpenSettings }: AccountsScreenProps) {
               : t('accounts.tapToEditNote')}
           </Text>
         </QueryState>
+
+        <AppFooter />
       </ScrollView>
 
       <AccountSheet

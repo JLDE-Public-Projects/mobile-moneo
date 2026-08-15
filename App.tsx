@@ -82,7 +82,7 @@ function AppContent() {
       {isAuthenticated ? (
          <MainNavigator/>
       ) : (
-         <AuthFlow onLogin={handleLogin} onRegister={handleRegister} onBiometricLogin={() => console.log('inicio de sesión biométrico')}/>
+         <AuthFlow onLogin={handleLogin} onRegister={handleRegister}/>
       )}
 
       {isSplashVisible && (

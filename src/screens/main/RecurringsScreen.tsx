@@ -3,6 +3,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { AppFooter } from '@/components/atoms/AppFooter';
 import { BackLink } from '@/components/atoms/BackLink';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
 import { Card } from '@/components/molecules/Card';
@@ -268,6 +269,8 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         <Text style={styles.note}>
           {t('recurrings.explanationNote')}
         </Text>
+
+        <AppFooter />
       </ScrollView>
 
       <NewRecurringSheet

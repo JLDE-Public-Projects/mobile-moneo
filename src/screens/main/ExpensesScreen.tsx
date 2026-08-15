@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { AppFooter } from '@/components/atoms/AppFooter';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SettingsIcon } from '@/components/icons/SettingsIcon';
 import { Card } from '@/components/molecules/Card';
@@ -186,6 +187,8 @@ export function ExpensesScreen({
             </Card>
           </>
         )}
+
+        <AppFooter />
       </ScrollView>
     </Screen>
   );
