@@ -3,6 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { StatusBar } from 'expo-status-bar';
 import { Screen } from '@/components/layout/Screen';
 import { ChevronIcon } from '@/components/icons/ChevronIcon';
+import { FormMessage } from '@/components/atoms/FormMessage';
 import { NumericKeypad } from '@/components/molecules/NumericKeypad';
 import { SegmentedControl, SegmentOption } from '@/components/molecules/SegmentedControl';
 import { SelectionSheet, SelectOption } from '@/components/organisms/SelectionSheet';
@@ -20,6 +21,8 @@ interface AddTransactionModalProps {
   visible: boolean;
   /** Cierra el modal. */
   onClose: () => void;
+  /** Lleva a la pantalla de cuentas (para crear la primera). */
+  onOpenAccounts: () => void;
 }
 
 /** Tipo de movimiento en el formulario. */
@@ -39,9 +42,13 @@ const TYPE_OPTIONS: SegmentOption<MovementType>[] = [
  * TanStack Query; el resumen, los movimientos y los gastos se refrescan solos.
  * Los pickers de categoría y cuenta reutilizan {@link SelectionSheet}.
  */
-export function AddTransactionModal({ visible, onClose }: AddTransactionModalProps) {
+export function AddTransactionModal({
+  visible,
+  onClose,
+  onOpenAccounts,
+}: AddTransactionModalProps) {
   const { data: categories = [] } = useCategories();
-  const { data: accounts = [] } = useAccounts();
+  const { data: accounts = [], isLoading: accountsLoading } = useAccounts();
   const addTransaction = useAddTransaction();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
@@ -52,6 +59,7 @@ export function AddTransactionModal({ visible, onClose }: AddTransactionModalPro
   const [accountName, setAccountName] = useState('');
   const [catPickerOpen, setCatPickerOpen] = useState(false);
   const [accPickerOpen, setAccPickerOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Al abrir, reiniciamos el formulario (las selecciones vuelven a su defecto).
   useEffect(() => {
@@ -61,6 +69,7 @@ export function AddTransactionModal({ visible, onClose }: AddTransactionModalPro
       setNote('');
       setCategoryName('');
       setAccountName('');
+      setErrorMessage('');
     }
   }, [visible]);
 
@@ -75,8 +84,16 @@ export function AddTransactionModal({ visible, onClose }: AddTransactionModalPro
     accounts.find((a) => a.name === accountName) ?? accounts[0];
 
   const numericAmount = amount ? Number(amount) : 0;
+  // Sin cuentas no hay dónde registrar el movimiento. Es el caso de una cuenta
+  // recién creada, así que en vez de dejar "Guardar" apagado sin motivo, se
+  // explica y se ofrece el camino para crear la primera.
+  const needsAccount = !accountsLoading && accounts.length === 0;
+  const isSaving = addTransaction.isPending;
   const canSave =
-    numericAmount > 0 && Boolean(selectedCategory) && Boolean(selectedAccount);
+    numericAmount > 0 &&
+    Boolean(selectedCategory) &&
+    Boolean(selectedAccount) &&
+    !isSaving;
 
   const appendAmount = (digits: string) =>
     setAmount((prev) => (prev + digits).replace(/^0+/, '').slice(0, 10));
@@ -90,16 +107,29 @@ export function AddTransactionModal({ visible, onClose }: AddTransactionModalPro
 
   const handleSave = async () => {
     if (!canSave || !selectedCategory || !selectedAccount) return;
+
     const signed = numericAmount * (type === 'expense' ? -1 : 1);
-    await addTransaction.mutateAsync({
-      amount: signed,
-      category: selectedCategory.name,
-      categoryColor: selectedCategory.color,
-      note: note.trim() || selectedCategory.name,
-      account: selectedAccount.name,
-      date: Date.now(),
-    });
-    onClose();
+    setErrorMessage('');
+    try {
+      await addTransaction.mutateAsync({
+        amount: signed,
+        category: selectedCategory.name,
+        categoryColor: selectedCategory.color,
+        note: note.trim() || selectedCategory.name,
+        account: selectedAccount.name,
+        accountId: selectedAccount.id,
+        date: Date.now(),
+      });
+      onClose();
+    } catch (error) {
+      // El guardado viaja por red y puede fallar: el modal se queda abierto con
+      // los datos escritos para poder reintentar sin volver a teclearlos.
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'No pudimos registrar el movimiento. Inténtalo de nuevo.';
+      setErrorMessage(message);
+    }
   };
 
   const categoryOptions: SelectOption<string>[] = typeCategories.map((c) => ({
@@ -127,7 +157,7 @@ export function AddTransactionModal({ visible, onClose }: AddTransactionModalPro
             <Text style={styles.headerTitle}>Nuevo</Text>
             <Pressable onPress={handleSave} hitSlop={8} disabled={!canSave}>
               <Text style={[styles.save, !canSave && styles.saveDisabled]}>
-                Guardar
+                {isSaving ? 'Guardando…' : 'Guardar'}
               </Text>
             </Pressable>
           </View>
@@ -204,6 +234,18 @@ export function AddTransactionModal({ visible, onClose }: AddTransactionModalPro
               />
             </View>
           </View>
+
+          {needsAccount && (
+            <Pressable onPress={onOpenAccounts} style={styles.notice}>
+              <Text style={styles.noticeText}>
+                Todavía no tienes cuentas. Crea una para poder registrar
+                movimientos.
+              </Text>
+              <Text style={styles.noticeAction}>Crear una cuenta</Text>
+            </Pressable>
+          )}
+
+          <FormMessage message={errorMessage} />
 
           <View style={styles.spacer} />
 
@@ -345,6 +387,23 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     paddingVertical: spacing.md,
+  },
+  notice: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.card,
+    marginTop: spacing.lg,
+    padding: spacing.lg,
+    gap: 6,
+  },
+  noticeText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    lineHeight: 21,
+  },
+  noticeAction: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.accent,
   },
   spacer: {
     flex: 1,

@@ -165,7 +165,17 @@ export function MainNavigator() {
         />
       )}
 
-      <AddTransactionModal visible={addOpen} onClose={() => setAddOpen(false)} />
+      <AddTransactionModal
+        visible={addOpen}
+        onClose={() => setAddOpen(false)}
+        // Sin cuentas no se puede registrar nada: se cierra el modal y se lleva
+        // al usuario a crear la primera.
+        onOpenAccounts={() => {
+          setAddOpen(false);
+          setDetail(null);
+          setActiveTab('accounts');
+        }}
+      />
     </View>
   );
 }
