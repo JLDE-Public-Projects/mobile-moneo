@@ -7,6 +7,7 @@ export default {
   common: {
     footerMadeWith: 'Made with ❤️ by ',
     footerAuthor: 'Jader Diaz',
+    done: 'Done',
     cancel: 'Cancel',
     save: 'Save',
     saveChanges: 'Save changes',
@@ -120,7 +121,6 @@ export default {
       saving: 'Saving…',
       amount: 'Amount',
       date: 'Date',
-      today: 'Today, {{day}}',
       notePlaceholder: 'Note (optional)',
       needsAccountNotice: "You don't have any accounts yet. Create one to record transactions.",
       createAccount: 'Create an account',

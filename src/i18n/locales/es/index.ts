@@ -16,6 +16,7 @@ export default {
   common: {
     footerMadeWith: 'Desarrollado con ❤️ por ',
     footerAuthor: 'Jader Diaz',
+    done: 'Listo',
     cancel: 'Cancelar',
     save: 'Guardar',
     saveChanges: 'Guardar cambios',
@@ -129,7 +130,6 @@ export default {
       saving: 'Guardando…',
       amount: 'Monto',
       date: 'Fecha',
-      today: 'Hoy, {{day}}',
       notePlaceholder: 'Nota (opcional)',
       needsAccountNotice: 'Todavía no tienes cuentas. Crea una para poder registrar movimientos.',
       createAccount: 'Crear una cuenta',

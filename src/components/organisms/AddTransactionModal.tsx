@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
+import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { ChevronIcon } from '@/components/icons/ChevronIcon';
 import { FormMessage } from '@/components/atoms/FormMessage';
 import { NumericKeypad } from '@/components/molecules/NumericKeypad';
@@ -19,7 +21,7 @@ import {
 import { Transaction } from '@/services/transactions/transaction.types';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
-import { formatDayMonth } from '@/utils/date';
+import { formatDayMonth, monthRange } from '@/utils/date';
 import { useMonthNames } from '@/hooks/useMonthNames';
 import { colors, radius, spacing, typography } from '@/theme';
 
@@ -72,7 +74,15 @@ export function AddTransactionModal({
   const [accountName, setAccountName] = useState('');
   const [catPickerOpen, setCatPickerOpen] = useState(false);
   const [accPickerOpen, setAccPickerOpen] = useState(false);
+  const [date, setDate] = useState(Date.now());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Moneo trabaja mes a mes: el movimiento solo puede fecharse dentro del mes
+  // en curso, el mismo periodo que ya filtra el resto de la app.
+  const currentMonth = useMemo(() => monthRange(), []);
+  const minDate = new Date(currentMonth.from);
+  const maxDate = new Date(currentMonth.to - 1);
 
   // Al abrir, precargamos el movimiento que se edita o dejamos el formulario
   // limpio. El importe se edita sin signo: lo pone el tipo al guardar.
@@ -86,12 +96,14 @@ export function AddTransactionModal({
       setNote(transaction.note);
       setCategoryName(transaction.category);
       setAccountName(transaction.account);
+      setDate(transaction.date);
     } else {
       setType('expense');
       setAmount('');
       setNote('');
       setCategoryName('');
       setAccountName('');
+      setDate(Date.now());
     }
   }, [visible, transaction]);
 
@@ -124,6 +136,17 @@ export function AddTransactionModal({
     setAmount((prev) => (prev + digits).replace(/^0+/, '').slice(0, 10));
   const deleteAmount = () => setAmount((prev) => prev.slice(0, -1));
 
+  // En Android el propio picker es un diálogo nativo que se cierra solo tras
+  // elegir o cancelar; en iOS es un calendario embebido en la hoja inferior,
+  // que el usuario cierra con "Listo".
+  const handleDateChange = (event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === 'android') {
+      setDatePickerOpen(false);
+    }
+    if (event.type === 'dismissed' || !selected) return;
+    setDate(selected.getTime());
+  };
+
   const handleChangeType = (next: MovementType) => {
     setType(next);
     // La categoría vuelve a la primera del nuevo tipo.
@@ -141,9 +164,9 @@ export function AddTransactionModal({
       note: note.trim() || selectedCategory.name,
       account: selectedAccount.name,
       accountId: selectedAccount.id,
-      // Al editar se conserva la fecha original y el enlace al recurrente que
-      // lo originó: se está corrigiendo el movimiento, no registrando otro.
-      date: transaction?.date ?? Date.now(),
+      date,
+      // Al editar se conserva el enlace al recurrente que lo originó: se está
+      // corrigiendo el movimiento, no registrando otro.
       recurringId: transaction?.recurringId ?? null,
     };
 
@@ -286,14 +309,21 @@ export function AddTransactionModal({
               <ChevronIcon />
             </Pressable>
 
-            <View style={[styles.field, styles.fieldBorder]}>
+            <Pressable
+              onPress={() => {
+                Keyboard.dismiss();
+                setDatePickerOpen(true);
+              }}
+              style={({ pressed }) => [
+                styles.field,
+                styles.fieldBorder,
+                pressed && styles.fieldPressed,
+              ]}
+            >
               <Text style={styles.fieldLabel}>{t('movements.modal.date')}</Text>
-              <Text style={styles.fieldValue}>
-                {transaction
-                  ? formatDayMonth(transaction.date, months)
-                  : t('movements.modal.today', { day: formatDayMonth(Date.now(), months) })}
-              </Text>
-            </View>
+              <Text style={styles.fieldValue}>{formatDayMonth(date, months)}</Text>
+              <ChevronIcon />
+            </Pressable>
 
             <View style={styles.field}>
               <TextInput
@@ -356,6 +386,35 @@ export function AddTransactionModal({
         selected={selectedAccount?.name ?? ''}
         onSelect={setAccountName}
       />
+
+      {/* En Android el picker es un diálogo nativo: no necesita hoja propia. */}
+      {Platform.OS === 'android' && datePickerOpen && (
+        <DateTimePicker
+          value={new Date(date)}
+          mode="date"
+          display="default"
+          minimumDate={minDate}
+          maximumDate={maxDate}
+          onChange={handleDateChange}
+        />
+      )}
+
+      {Platform.OS === 'ios' && (
+        <BottomSheet visible={datePickerOpen} onClose={() => setDatePickerOpen(false)}>
+          <Text style={styles.dateSheetTitle}>{t('movements.modal.date')}</Text>
+          <DateTimePicker
+            value={new Date(date)}
+            mode="date"
+            display="inline"
+            minimumDate={minDate}
+            maximumDate={maxDate}
+            onChange={handleDateChange}
+          />
+          <Pressable onPress={() => setDatePickerOpen(false)} style={styles.dateDoneButton}>
+            <Text style={styles.dateDoneText}>{t('common.done')}</Text>
+          </Pressable>
+        </BottomSheet>
+      )}
     </Modal>
   );
 }
@@ -507,5 +566,25 @@ const styles = StyleSheet.create({
   keypad: {
     paddingHorizontal: spacing.sm,
     paddingBottom: spacing.sm,
+  },
+  dateSheetTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+    color: colors.textPrimary,
+    paddingHorizontal: spacing.xs,
+    paddingBottom: spacing.md,
+  },
+  dateDoneButton: {
+    alignItems: 'center',
+    backgroundColor: colors.accent,
+    borderRadius: radius.card,
+    marginTop: spacing.lg,
+    paddingVertical: 14,
+  },
+  dateDoneText: {
+    ...typography.body,
+    fontWeight: '600',
+    color: colors.white,
   },
 });
