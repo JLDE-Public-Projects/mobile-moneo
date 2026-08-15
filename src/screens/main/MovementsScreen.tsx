@@ -9,13 +9,15 @@ import { Card } from '@/components/molecules/Card';
 import { SearchBar } from '@/components/molecules/SearchBar';
 import { SegmentedControl } from '@/components/molecules/SegmentedControl';
 import { TransactionRow } from '@/components/molecules/TransactionRow';
+import { QueryState } from '@/components/molecules/QueryState';
+import { EmptyTransactions } from '@/components/organisms/EmptyTransactions';
 import { TAB_BAR_SPACE } from '@/screens/main/PlaceholderScreen';
 import { useTransactions } from '@/services/transactions/transaction.queries';
 import { TRANSACTION_FILTERS } from '@/services/transactions/transaction.constants';
 import { TransactionFilter } from '@/services/transactions/transaction.types';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
-import { formatDayMonth } from '@/utils/date';
+import { formatDayMonth, monthLong } from '@/utils/date';
 import { colors, layout, spacing, typography } from '@/theme';
 
 /** Callbacks de navegación que la pantalla delega en su contenedor. */
@@ -33,8 +35,11 @@ interface MovementsScreenProps {
  * verde. Sigue el diseño de la pestaña "Movimientos".
  */
 export function MovementsScreen({ onOpenSettings }: MovementsScreenProps) {
-  const { data: transactions = [] } = useTransactions();
+  const { data: transactions = [], isLoading, isError, refetch } = useTransactions();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
+
+  // Mes en curso, que es el periodo que la consulta ya trae del servidor.
+  const month = monthLong(Date.now());
 
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TransactionFilter>('all');
@@ -55,6 +60,10 @@ export function MovementsScreen({ onOpenSettings }: MovementsScreenProps) {
     );
   }, [transactions, filter, query]);
 
+  // Se distingue "no hay nada registrado" de "la búsqueda no encontró nada":
+  // el primero es un estado de bienvenida, el segundo un resultado vacío.
+  const hasFilters = query.trim().length > 0 || filter !== 'all';
+  const isFresh = transactions.length === 0;
   const isEmpty = filtered.length === 0;
 
   return (
@@ -73,47 +82,65 @@ export function MovementsScreen({ onOpenSettings }: MovementsScreenProps) {
           </IconButton>
         </View>
 
-        {/* Búsqueda */}
-        <View style={styles.search}>
-          <SearchBar
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Buscar por nombre"
-          />
-        </View>
-
-        {/* Filtro por tipo */}
-        <View style={styles.filter}>
-          <SegmentedControl
-            options={TRANSACTION_FILTERS}
-            value={filter}
-            onChange={setFilter}
-          />
-        </View>
-
-        <SectionLabel>{`${filtered.length} movimientos · agosto`}</SectionLabel>
-
-        {isEmpty ? (
-          <Text style={styles.empty}>
-            {query.trim()
-              ? `No hay movimientos que coincidan con "${query.trim()}".`
-              : 'Aún no tienes movimientos.'}
-          </Text>
-        ) : (
-          <Card>
-            {filtered.map((t, index) => (
-              <TransactionRow
-                key={t.id}
-                category={t.category}
-                color={t.categoryColor}
-                subtitle={`${formatDayMonth(t.date)} · ${t.note || t.account}`}
-                amount={`${t.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(t.amount), currency)}`}
-                income={t.amount > 0}
-                showSeparator={index < filtered.length - 1}
+        {/* Buscar y filtrar solo tienen sentido si hay algo que filtrar. */}
+        {!isFresh && (
+          <>
+            <View style={styles.search}>
+              <SearchBar
+                value={query}
+                onChangeText={setQuery}
+                placeholder="Buscar por nombre"
               />
-            ))}
-          </Card>
+            </View>
+
+            <View style={styles.filter}>
+              <SegmentedControl
+                options={TRANSACTION_FILTERS}
+                value={filter}
+                onChange={setFilter}
+              />
+            </View>
+          </>
         )}
+
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={refetch}
+          errorText="No pudimos cargar tus movimientos."
+        >
+          {isFresh ? (
+            <EmptyTransactions month={month} />
+          ) : (
+            <>
+              <SectionLabel>
+                {`${filtered.length} ${filtered.length === 1 ? 'movimiento' : 'movimientos'} · ${month}`}
+              </SectionLabel>
+
+              {isEmpty ? (
+                <Text style={styles.empty}>
+                  {hasFilters
+                    ? 'Ningún movimiento coincide con lo que buscas.'
+                    : `Aún no tienes movimientos en ${month}.`}
+                </Text>
+              ) : (
+                <Card>
+                  {filtered.map((t, index) => (
+                    <TransactionRow
+                      key={t.id}
+                      category={t.category}
+                      color={t.categoryColor}
+                      subtitle={`${formatDayMonth(t.date)} · ${t.note || t.account}`}
+                      amount={`${t.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(t.amount), currency)}`}
+                      income={t.amount > 0}
+                      showSeparator={index < filtered.length - 1}
+                    />
+                  ))}
+                </Card>
+              )}
+            </>
+          )}
+        </QueryState>
       </ScrollView>
     </Screen>
   );
