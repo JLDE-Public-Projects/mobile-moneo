@@ -5,6 +5,8 @@
  */
 export default {
   common: {
+    footerMadeWith: 'Made with ❤️ by ',
+    footerAuthor: 'Jader Diaz',
     cancel: 'Cancel',
     save: 'Save',
     saveChanges: 'Save changes',
@@ -52,7 +54,6 @@ export default {
       usernamePlaceholder: 'Your username',
       password: 'Password',
       submit: 'Sign in',
-      biometric: 'Sign in with Face ID',
       firstTime: 'First time here?',
       createAccount: 'Create account',
       errorInvalid: 'Check your username and password to continue.',
@@ -296,10 +297,6 @@ export default {
     currency: 'Currency',
     categories: 'Categories',
     budget: 'Budget',
-    privacy: 'Privacy',
-    faceId: 'Face ID on open',
-    hideAmounts: 'Hide amounts in the summary',
-    exportCsv: 'Export to CSV',
     logout: 'Sign out',
     footerNote: "Synced with your Moneo account. No bank connection: you record everything yourself.",
     currencySheetTitle: 'Currency',

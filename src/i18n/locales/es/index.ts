@@ -14,6 +14,8 @@
  */
 export default {
   common: {
+    footerMadeWith: 'Desarrollado con ❤️ por ',
+    footerAuthor: 'Jader Diaz',
     cancel: 'Cancelar',
     save: 'Guardar',
     saveChanges: 'Guardar cambios',
@@ -61,7 +63,6 @@ export default {
       usernamePlaceholder: 'Tu usuario',
       password: 'Clave',
       submit: 'Entrar',
-      biometric: 'Entrar con Face ID',
       firstTime: '¿Primera vez?',
       createAccount: 'Crear cuenta',
       errorInvalid: 'Revisa tu usuario y clave para continuar.',
@@ -305,10 +306,6 @@ export default {
     currency: 'Moneda',
     categories: 'Categorías',
     budget: 'Presupuesto',
-    privacy: 'Privacidad',
-    faceId: 'Face ID al abrir',
-    hideAmounts: 'Ocultar montos en el resumen',
-    exportCsv: 'Exportar a CSV',
     logout: 'Cerrar sesión',
     footerNote: 'Sincronizado con tu cuenta de Moneo. Sin conexión bancaria: todo lo registras tú.',
     currencySheetTitle: 'Moneda',

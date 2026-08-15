@@ -3,9 +3,9 @@ import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
 import {useTranslation} from 'react-i18next';
 import {Screen} from '@/components/layout/Screen';
+import {AppFooter} from '@/components/atoms/AppFooter';
 import {BackLink} from '@/components/atoms/BackLink';
 import {SectionLabel} from '@/components/atoms/SectionLabel';
-import {Toggle} from '@/components/atoms/Toggle';
 import {ChevronIcon} from '@/components/icons/ChevronIcon';
 import {Card} from '@/components/molecules/Card';
 import {ListRow} from '@/components/molecules/ListRow';
@@ -43,9 +43,11 @@ interface SettingsScreenProps {
  * Pantalla de "Ajustes" (configuraciones).
  *
  * Sigue el diseño: tarjeta de perfil, sección "General" (moneda, categorías,
- * presupuesto, primer día del mes), sección "Privacidad" (interruptores y
- * exportación) y el cierre de sesión. Los interruptores tienen estado local por
- * ahora; se persistirán cuando exista el almacenamiento de preferencias.
+ * presupuesto, idioma) y el cierre de sesión.
+ *
+ * La sección "Privacidad" (Face ID, ocultar montos, exportar CSV) se retiró:
+ * ninguna de las tres estaba implementada todavía. Se puede reintroducir más
+ * adelante cuando haya una implementación real detrás.
  */
 export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenBudget}: SettingsScreenProps) {
    const {t} = useTranslation();
@@ -64,10 +66,6 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
    const languagePreference = useSettingsStore((state) => state.languagePreference);
    const setLanguagePreference = useSettingsStore((state) => state.setLanguagePreference);
    const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
-
-   // Estado local de los interruptores (TODO: persistir en preferencias).
-   const [faceId, setFaceId] = useState(false);
-   const [hideAmounts, setHideAmounts] = useState(false);
 
    const user = session?.user;
    const initial = (user?.name ?? '?').charAt(0).toUpperCase();
@@ -133,16 +131,6 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
                   onPress={() => setLanguageSheetOpen(true)}
                   showChevron={false}
                />
-            </Card>
-
-            {/* Privacidad */}
-            <SectionLabel style={styles.sectionSpacing}>{t('settings.privacy')}</SectionLabel>
-            <Card>
-               <ListRow label={t('settings.faceId')} showSeparator right={<Toggle value={faceId} onValueChange={setFaceId}/>}/>
-               <ListRow label={t('settings.hideAmounts')} showSeparator right={<Toggle value={hideAmounts} onValueChange={setHideAmounts}/>}/>
-               {/* TODO(export): exportar los movimientos a CSV. */}
-               <ListRow label={t('settings.exportCsv')} onPress={() => {
-               }}/>
             </Card>
 
             {/* Cerrar sesión */}
@@ -234,9 +222,6 @@ const styles = StyleSheet.create({
       ...typography.caption,
       color: colors.textSecondary,
       marginTop: 1,
-   },
-   sectionSpacing: {
-      paddingTop: spacing.xl,
    },
    logoutCard: {
       marginTop: spacing.xxl,

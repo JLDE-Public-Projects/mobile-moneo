@@ -155,6 +155,7 @@ export function MainNavigator() {
 
   // Las pantallas profundas (detalles) ocultan la barra de tabs.
   const DEEP_DETAILS: DetailScreen[] = [
+    'settings',
     'categories',
     'budget',
     'catDetail',
