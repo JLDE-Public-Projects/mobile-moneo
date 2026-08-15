@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Keyboard, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
@@ -79,10 +78,15 @@ export function AddTransactionModal({
   const [errorMessage, setErrorMessage] = useState('');
 
   // Moneo trabaja mes a mes: el movimiento solo puede fecharse dentro del mes
-  // en curso, el mismo periodo que ya filtra el resto de la app.
+  // en curso, el mismo periodo que ya filtra el resto de la app. Al acotarse a
+  // un único mes, el selector no necesita navegar entre meses o años: basta
+  // una grilla con los días de este mes.
   const currentMonth = useMemo(() => monthRange(), []);
-  const minDate = new Date(currentMonth.from);
-  const maxDate = new Date(currentMonth.to - 1);
+  const monthStart = new Date(currentMonth.from);
+  const monthYear = monthStart.getFullYear();
+  const monthIndex = monthStart.getMonth();
+  const daysInMonth = new Date(monthYear, monthIndex + 1, 0).getDate();
+  const selectedDay = new Date(date).getDate();
 
   // Al abrir, precargamos el movimiento que se edita o dejamos el formulario
   // limpio. El importe se edita sin signo: lo pone el tipo al guardar.
@@ -136,15 +140,20 @@ export function AddTransactionModal({
     setAmount((prev) => (prev + digits).replace(/^0+/, '').slice(0, 10));
   const deleteAmount = () => setAmount((prev) => prev.slice(0, -1));
 
-  // En Android el propio picker es un diálogo nativo que se cierra solo tras
-  // elegir o cancelar; en iOS es un calendario embebido en la hoja inferior,
-  // que el usuario cierra con "Listo".
-  const handleDateChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === 'android') {
-      setDatePickerOpen(false);
-    }
-    if (event.type === 'dismissed' || !selected) return;
-    setDate(selected.getTime());
+  // Conserva la hora del valor actual y solo cambia el día, dentro del mes en
+  // curso (el único que la grilla ofrece).
+  const handleSelectDay = (day: number) => {
+    const current = new Date(date);
+    const next = new Date(
+      monthYear,
+      monthIndex,
+      day,
+      current.getHours(),
+      current.getMinutes(),
+      current.getSeconds(),
+    );
+    setDate(next.getTime());
+    setDatePickerOpen(false);
   };
 
   const handleChangeType = (next: MovementType) => {
@@ -387,34 +396,32 @@ export function AddTransactionModal({
         onSelect={setAccountName}
       />
 
-      {/* En Android el picker es un diálogo nativo: no necesita hoja propia. */}
-      {Platform.OS === 'android' && datePickerOpen && (
-        <DateTimePicker
-          value={new Date(date)}
-          mode="date"
-          display="default"
-          minimumDate={minDate}
-          maximumDate={maxDate}
-          onChange={handleDateChange}
-        />
-      )}
-
-      {Platform.OS === 'ios' && (
-        <BottomSheet visible={datePickerOpen} onClose={() => setDatePickerOpen(false)}>
-          <Text style={styles.dateSheetTitle}>{t('movements.modal.date')}</Text>
-          <DateTimePicker
-            value={new Date(date)}
-            mode="date"
-            display="inline"
-            minimumDate={minDate}
-            maximumDate={maxDate}
-            onChange={handleDateChange}
-          />
-          <Pressable onPress={() => setDatePickerOpen(false)} style={styles.dateDoneButton}>
-            <Text style={styles.dateDoneText}>{t('common.done')}</Text>
-          </Pressable>
-        </BottomSheet>
-      )}
+      {/* Selector de fecha: solo días, ya que el mes está fijo al actual. */}
+      <BottomSheet visible={datePickerOpen} onClose={() => setDatePickerOpen(false)}>
+        <Text style={styles.dateSheetTitle}>
+          {months.long[monthIndex]} {monthYear}
+        </Text>
+        <View style={styles.dayGrid}>
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+            const isSelected = day === selectedDay;
+            return (
+              <Pressable
+                key={day}
+                onPress={() => handleSelectDay(day)}
+                style={({ pressed }) => [
+                  styles.dayCell,
+                  isSelected && styles.daySelected,
+                  pressed && !isSelected && styles.dayPressed,
+                ]}
+              >
+                <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>
+                  {day}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </BottomSheet>
     </Modal>
   );
 }
@@ -575,16 +582,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
     paddingBottom: spacing.md,
   },
-  dateDoneButton: {
-    alignItems: 'center',
-    backgroundColor: colors.accent,
-    borderRadius: radius.card,
-    marginTop: spacing.lg,
-    paddingVertical: 14,
+  dayGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
-  dateDoneText: {
+  dayCell: {
+    // 7 columnas por fila, como una semana.
+    width: '14.28%',
+    aspectRatio: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayPressed: {
+    opacity: 0.6,
+  },
+  daySelected: {
+    backgroundColor: colors.accent,
+    borderRadius: radius.pill,
+  },
+  dayText: {
     ...typography.body,
-    fontWeight: '600',
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  dayTextSelected: {
     color: colors.white,
+    fontWeight: '600',
   },
 });

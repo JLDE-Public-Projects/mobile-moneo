@@ -16,7 +16,6 @@ export default {
   common: {
     footerMadeWith: 'Desarrollado con ❤️ por ',
     footerAuthor: 'Jader Diaz',
-    done: 'Listo',
     cancel: 'Cancelar',
     save: 'Guardar',
     saveChanges: 'Guardar cambios',
