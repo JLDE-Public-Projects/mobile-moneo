@@ -9,6 +9,7 @@ import { ListRow } from '@/components/molecules/ListRow';
 import { CategoryStatRow } from '@/components/molecules/CategoryStatRow';
 import { TAB_BAR_SPACE } from '@/screens/main/PlaceholderScreen';
 import { useTransactions } from '@/services/transactions/transaction.queries';
+import { useCategories } from '@/services/categories/category.queries';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { colors, layout, spacing, typography } from '@/theme';
@@ -44,7 +45,18 @@ export function ExpensesScreen({
   onOpenCategory,
 }: ExpensesScreenProps) {
   const { data: transactions = [] } = useTransactions();
+  const { data: budgetCategories = [] } = useCategories();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
+
+  // Límite mensual por categoría, para señalar las que se pasaron. Un límite en
+  // cero significa "sin tope", así que esas nunca se marcan.
+  const budgetByCategory = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const c of budgetCategories) {
+      if (c.budget > 0) map.set(c.name, c.budget);
+    }
+    return map;
+  }, [budgetCategories]);
 
   // Agrupamos los egresos por categoría y ordenamos de mayor a menor.
   const { categories, total, max } = useMemo(() => {
@@ -119,6 +131,7 @@ export function ExpensesScreen({
                   amount={`${currency.symbol}${formatNumber(c.total, currency)}`}
                   pct={`${Math.round((c.total / total) * 100)}%`}
                   barWidth={(c.total / max) * 100}
+                  over={c.total > (budgetByCategory.get(c.name) ?? Infinity)}
                   showSeparator={index < categories.length - 1}
                   onPress={() => onOpenCategory(c.name)}
                 />

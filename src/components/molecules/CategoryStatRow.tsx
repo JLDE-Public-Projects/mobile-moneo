@@ -14,6 +14,8 @@ interface CategoryStatRowProps {
   pct: string;
   /** Ancho de la barra de progreso, 0–100 (relativo a la categoría mayor). */
   barWidth: number;
+  /** Si el gasto superó el presupuesto de la categoría. */
+  over?: boolean;
   /** Acción al pulsar (abre el detalle de la categoría). */
   onPress?: () => void;
   /** Dibuja una línea separadora inferior. */
@@ -31,9 +33,14 @@ export function CategoryStatRow({
   amount,
   pct,
   barWidth,
+  over = false,
   onPress,
   showSeparator = false,
 }: CategoryStatRowProps) {
+  // Al pasarse del presupuesto, la barra y el monto se tiñen de rojo: es la
+  // misma señal que ya usa la pantalla de presupuesto, para que "pasarse"
+  // se lea igual en toda la app.
+  const barColor = over ? colors.negative : color;
   return (
     <Pressable
       onPress={onPress}
@@ -54,15 +61,17 @@ export function CategoryStatRow({
           <View
             style={[
               styles.fill,
-              { width: `${Math.min(100, barWidth)}%`, backgroundColor: color },
+              { width: `${Math.min(100, barWidth)}%`, backgroundColor: barColor },
             ]}
           />
         </View>
       </View>
 
       <View style={styles.right}>
-        <Text style={styles.amount}>{amount}</Text>
-        <Text style={styles.pct}>{pct}</Text>
+        <Text style={[styles.amount, over && styles.amountOver]}>{amount}</Text>
+        <Text style={[styles.pct, over && styles.pctOver]}>
+          {over ? 'Te pasaste' : pct}
+        </Text>
       </View>
 
       <ChevronIcon />
@@ -116,8 +125,15 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
+  amountOver: {
+    color: colors.negative,
+  },
   pct: {
     fontSize: 12,
     color: colors.textSecondary,
+  },
+  pctOver: {
+    color: colors.negative,
+    fontWeight: '600',
   },
 });
