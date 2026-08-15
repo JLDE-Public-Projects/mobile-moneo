@@ -133,11 +133,7 @@ export function HomeScreen({
 
         {/* Accesos */}
         <Card style={styles.linksCard}>
-          <ListRow
-            label="Pagos Recurrentes"
-            onPress={onOpenRecurrings}
-            showSeparator
-          />
+          <ListRow label="Recurrentes" onPress={onOpenRecurrings} showSeparator/>
           <ListRow label="Historial" detail="6 meses" onPress={onOpenHistory} />
         </Card>
       </ScrollView>

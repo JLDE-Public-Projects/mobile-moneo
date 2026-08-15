@@ -164,7 +164,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
 
         {/* Por pagar */}
         <SectionLabel style={styles.sectionSpacing}>
-          {pending.length ? `Por pagar (${pending.length})` : 'Por pagar'}
+          {pending.length ? `Pendientes (${pending.length})` : 'Pendientes'}
         </SectionLabel>
         <Card>
           {pending.map((r) => {
