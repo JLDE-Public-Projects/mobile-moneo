@@ -62,12 +62,3 @@ export function useSetRecurringActive() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: RECURRINGS_KEY }),
   });
 }
-
-/** Mutación para eliminar un recurrente. */
-export function useRemoveRecurring() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => getRepositories().recurrings.remove(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: RECURRINGS_KEY }),
-  });
-}

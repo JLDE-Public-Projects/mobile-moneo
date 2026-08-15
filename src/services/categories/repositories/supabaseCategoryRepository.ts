@@ -109,7 +109,12 @@ export const supabaseCategoryRepository: CategoryRepository = {
     // Los movimientos guardan la categoría desnormalizada (nombre), no un id:
     // así conservan su etiqueta original aunque la categoría se renombre o
     // borre después. Por eso "en uso" se resuelve por nombre, no por id.
-    const { data, error } = await supabase.from('transactions').select('category');
+    //
+    // El DISTINCT se hace en la base (RPC `used_category_names`, ver
+    // supabase/category_usage.sql) en vez de traer al cliente una fila por
+    // cada movimiento del historial completo para deduplicarla en JS: eso
+    // crecería sin límite con la antigüedad de la cuenta.
+    const { data, error } = await supabase.rpc('used_category_names');
 
     if (error) {
       throw new Error(i18n.t('categories.repository.loadFailed'));
