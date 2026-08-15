@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Button } from '@/components/atoms/Button';
@@ -21,7 +22,7 @@ import {
   isValidName,
   isValidPassword,
   MIN_PASSWORD_LENGTH,
-  PASSWORD_PLACEHOLDER,
+  passwordPlaceholder,
 } from '@/utils/validation';
 import { colors, layout, radius, spacing, typography } from '@/theme';
 
@@ -39,6 +40,7 @@ interface ProfileScreenProps {
  * refrescan la sesión global.
  */
 export function ProfileScreen({ onBack }: ProfileScreenProps) {
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.session?.user);
   const updateProfile = useUpdateProfile();
   const inviteCode = useInviteCodeQuery(user?.id);
@@ -49,7 +51,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
   const [feedback, setFeedback] = useState<{ text: string; ok: boolean } | null>(
     null,
   );
-  const [copyLabel, setCopyLabel] = useState('Copiar');
+  const [copyLabel, setCopyLabel] = useState<string>(t('common.copy'));
 
   const initial = (name || user?.name || '?').charAt(0).toUpperCase();
 
@@ -58,18 +60,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
 
     // Validación de formato (el usuario es de solo lectura, no se valida aquí).
     if (!isValidName(name)) {
-      setFeedback({ text: 'Revisa tu nombre.', ok: false });
+      setFeedback({ text: t('profile.errorEmptyName'), ok: false });
       return;
     }
     if (newPassword && !isValidPassword(newPassword)) {
       setFeedback({
-        text: `La nueva clave necesita mínimo ${MIN_PASSWORD_LENGTH} caracteres.`,
+        text: t('profile.errorShortPassword', { min: MIN_PASSWORD_LENGTH }),
         ok: false,
       });
       return;
     }
     if (newPassword && !currentPassword) {
-      setFeedback({ text: 'Escribe tu clave actual para cambiarla.', ok: false });
+      setFeedback({ text: t('profile.errorMissingCurrentPassword'), ok: false });
       return;
     }
     if (!user) return;
@@ -85,20 +87,20 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
       });
       setCurrentPassword('');
       setNewPassword('');
-      setFeedback({ text: 'Cambios guardados.', ok: true });
+      setFeedback({ text: t('profile.savedSuccess'), ok: true });
     } catch (error) {
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos guardar los cambios.';
+          : t('profile.errorSaveFailed');
       setFeedback({ text: message, ok: false });
     }
   };
 
   const handleCopy = () => {
     // TODO(clipboard): copiar al portapapeles con expo-clipboard.
-    setCopyLabel('¡Copiado!');
-    setTimeout(() => setCopyLabel('Copiar'), 1500);
+    setCopyLabel(t('common.copied'));
+    setTimeout(() => setCopyLabel(t('common.copy')), 1500);
   };
 
   return (
@@ -114,9 +116,9 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.backRow}>
-            <BackLink label="Ajustes" onPress={onBack} />
+            <BackLink label={t('common.settings')} onPress={onBack} />
           </View>
-          <Text style={styles.title}>Mi perfil</Text>
+          <Text style={styles.title}>{t('profile.title')}</Text>
 
           {/* Avatar */}
           <View style={styles.avatarWrap}>
@@ -126,18 +128,18 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           </View>
 
           {/* Datos personales */}
-          <SectionLabel>Datos personales</SectionLabel>
+          <SectionLabel>{t('profile.personalData')}</SectionLabel>
           <Card>
             <InputRow
-              label="Nombre"
-              placeholder="Tu nombre"
+              label={t('profile.name')}
+              placeholder={t('profile.namePlaceholder')}
               autoCapitalize="words"
               value={name}
               onChangeText={setName}
               showSeparator
             />
             <InputRow
-              label="Usuario"
+              label={t('profile.username')}
               autoCapitalize="none"
               autoCorrect={false}
               value={user?.username ?? ''}
@@ -146,23 +148,23 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             />
           </Card>
           <Text style={styles.note}>
-            Tu usuario identifica tu cuenta y no se puede cambiar.
+            {t('profile.usernameNote')}
           </Text>
 
           {/* Cambiar clave */}
-          <SectionLabel style={styles.sectionSpacing}>Cambiar clave</SectionLabel>
+          <SectionLabel style={styles.sectionSpacing}>{t('profile.changePassword')}</SectionLabel>
           <Card>
             <InputRow
-              label="Actual"
-              placeholder="Clave actual"
+              label={t('profile.currentPassword')}
+              placeholder={t('profile.currentPasswordPlaceholder')}
               secureTextEntry
               value={currentPassword}
               onChangeText={setCurrentPassword}
               showSeparator
             />
             <InputRow
-              label="Nueva"
-              placeholder={PASSWORD_PLACEHOLDER}
+              label={t('profile.newPassword')}
+              placeholder={passwordPlaceholder(t)}
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}
@@ -181,24 +183,24 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
           )}
 
           <Button
-            label="Guardar cambios"
+            label={t('profile.saveChanges')}
             onPress={handleSave}
             loading={updateProfile.isPending}
             style={styles.saveButton}
           />
           <Text style={styles.note}>
-            Deja "Nueva" en blanco si solo quieres actualizar tu nombre o usuario.
+            {t('profile.passwordHint')}
           </Text>
 
           {/* Invitar a alguien */}
           <SectionLabel style={styles.sectionSpacing}>
-            Invitar a alguien
+            {t('profile.inviteSection')}
           </SectionLabel>
           <View style={styles.inviteCard}>
-            <Text style={styles.inviteLabel}>Tu código de invitación</Text>
+            <Text style={styles.inviteLabel}>{t('profile.inviteCodeLabel')}</Text>
             <View style={styles.inviteRow}>
               <Text style={styles.inviteCode}>
-                {inviteCode.data ?? (inviteCode.isLoading ? '···' : '—')}
+                {inviteCode.data ?? (inviteCode.isLoading ? t('common.placeholderEllipsis') : t('common.placeholderDash'))}
               </Text>
               <Pressable onPress={handleCopy} style={styles.copyButton}>
                 <Text style={styles.copyText}>{copyLabel}</Text>
@@ -206,8 +208,7 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
             </View>
           </View>
           <Text style={styles.note}>
-            Compártelo con quien quieras invitar a Moneo. Lo pedirá en su pantalla
-            de registro.
+            {t('profile.inviteNote')}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

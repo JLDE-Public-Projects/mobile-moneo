@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { isValidPassword, isValidUsername, normalizeUsername } from '@/utils/validation';
 
 /** Credenciales entregadas al llamador tras un envío válido. */
@@ -42,6 +43,7 @@ interface UseLoginFormResult {
 export function useLoginForm({
   onSubmit,
 }: UseLoginFormOptions): UseLoginFormResult {
+  const { t } = useTranslation();
   const [username, setUsernameValue] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -68,7 +70,7 @@ export function useLoginForm({
 
     // Validación de formato al enviar (no al escribir).
     if (!isValidUsername(username) || !isValidPassword(password)) {
-      setErrorMessage('Revisa tu usuario y clave para continuar.');
+      setErrorMessage(t('auth.login.errorInvalid'));
       return;
     }
 
@@ -81,12 +83,12 @@ export function useLoginForm({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos iniciar sesión. Inténtalo de nuevo.';
+          : t('auth.login.errorGeneric');
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
     }
-  }, [isSubmitting, onSubmit, password, username]);
+  }, [isSubmitting, onSubmit, password, t, username]);
 
   return {
     username,

@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {StatusBar} from 'expo-status-bar';
+import {useTranslation} from 'react-i18next';
 import {Screen} from '@/components/layout/Screen';
 import {BackLink} from '@/components/atoms/BackLink';
 import {SectionLabel} from '@/components/atoms/SectionLabel';
@@ -47,6 +48,7 @@ interface SettingsScreenProps {
  * ahora; se persistirán cuando exista el almacenamiento de preferencias.
  */
 export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenBudget}: SettingsScreenProps) {
+   const {t} = useTranslation();
    const session = useAuthStore((state) => state.session);
    // El logout se hace en Supabase; el listener de sesión limpia el store solo.
    const handleLogout = () => {
@@ -68,7 +70,7 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
    // Opciones del selector de moneda: nombre + "CÓDIGO SÍMBOLO · ejemplo".
    const currencyOptions: SelectOption<CurrencyCode>[] = CURRENCIES.map((c) => ({
       value: c.code,
-      label: c.name,
+      label: t(c.nameKey),
       sub: `${c.code} ${c.symbol} · ${formatNumber(CURRENCY_EXAMPLE, c)}`,
    }));
 
@@ -79,10 +81,10 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
 
             {/* Cabecera */}
             <View style={styles.backRow}>
-               <BackLink label="Resumen" onPress={onBack}/>
+               <BackLink label={t('settings.backToHome')} onPress={onBack}/>
             </View>
 
-            <Text style={styles.title}>Ajustes</Text>
+            <Text style={styles.title}>{t('settings.title')}</Text>
 
             {/* Tarjeta de perfil */}
             <Pressable onPress={onOpenProfile} style={({pressed}) => [styles.profileCard, pressed && styles.profilePressed]}>
@@ -91,7 +93,7 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
                </View>
                <View style={styles.profileInfo}>
                   <Text style={styles.profileName} numberOfLines={1}>
-                     {user?.name ?? 'Tu cuenta'}
+                     {user?.name ?? t('settings.defaultUserName')}
                   </Text>
                   <Text style={styles.profileMeta} numberOfLines={1}>
                      {user?.username ?? ''}
@@ -101,37 +103,36 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
             </Pressable>
 
             {/* General */}
-            <SectionLabel>General</SectionLabel>
+            <SectionLabel>{t('settings.general')}</SectionLabel>
             <Card>
                <ListRow
-                  label="Moneda"
+                  label={t('settings.currency')}
                   detail={currencyShortLabel(getCurrency(currency))}
                   onPress={() => setCurrencySheetOpen(true)}
                   showChevron={false}
                   showSeparator
                />
-               <ListRow label="Categorías" onPress={onOpenCategories} showSeparator/>
-               <ListRow label="Presupuesto" onPress={onOpenBudget}/>
+               <ListRow label={t('settings.categories')} onPress={onOpenCategories} showSeparator/>
+               <ListRow label={t('settings.budget')} onPress={onOpenBudget}/>
             </Card>
 
             {/* Privacidad */}
-            <SectionLabel style={styles.sectionSpacing}>Privacidad</SectionLabel>
+            <SectionLabel style={styles.sectionSpacing}>{t('settings.privacy')}</SectionLabel>
             <Card>
-               <ListRow label="Face ID al abrir" showSeparator right={<Toggle value={faceId} onValueChange={setFaceId}/>}/>
-               <ListRow label="Ocultar montos en el resumen" showSeparator right={<Toggle value={hideAmounts} onValueChange={setHideAmounts}/>}/>
+               <ListRow label={t('settings.faceId')} showSeparator right={<Toggle value={faceId} onValueChange={setFaceId}/>}/>
+               <ListRow label={t('settings.hideAmounts')} showSeparator right={<Toggle value={hideAmounts} onValueChange={setHideAmounts}/>}/>
                {/* TODO(export): exportar los movimientos a CSV. */}
-               <ListRow label="Exportar a CSV" onPress={() => {
+               <ListRow label={t('settings.exportCsv')} onPress={() => {
                }}/>
             </Card>
 
             {/* Cerrar sesión */}
             <Card style={styles.logoutCard}>
-               <Button label="Cerrar sesión" variant="secondary" destructive onPress={handleLogout}/>
+               <Button label={t('settings.logout')} variant="secondary" destructive onPress={handleLogout}/>
             </Card>
 
             <Text style={styles.note}>
-               Sincronizado con tu cuenta de Moneo. Sin conexión bancaria: todo lo
-               registras tú.
+               {t('settings.footerNote')}
             </Text>
 
          </ScrollView>
@@ -140,7 +141,7 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
          <SelectionSheet
             visible={currencySheetOpen}
             onClose={() => setCurrencySheetOpen(false)}
-            title="Moneda"
+            title={t('settings.currencySheetTitle')}
             options={currencyOptions}
             selected={currency}
             onSelect={setCurrency}

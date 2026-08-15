@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { ChevronIcon } from '@/components/icons/ChevronIcon';
 import { FormMessage } from '@/components/atoms/FormMessage';
@@ -19,6 +20,7 @@ import { Transaction } from '@/services/transactions/transaction.types';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { formatDayMonth } from '@/utils/date';
+import { useMonthNames } from '@/hooks/useMonthNames';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface AddTransactionModalProps {
@@ -35,12 +37,6 @@ interface AddTransactionModalProps {
 /** Tipo de movimiento en el formulario. */
 type MovementType = 'expense' | 'income';
 
-/** Opciones del control segmentado de tipo. */
-const TYPE_OPTIONS: SegmentOption<MovementType>[] = [
-  { value: 'expense', label: 'Egreso' },
-  { value: 'income', label: 'Ingreso' },
-];
-
 /**
  * Modal de "Nuevo movimiento" (organismo).
  *
@@ -55,6 +51,12 @@ export function AddTransactionModal({
   onClose,
   onOpenAccounts,
 }: AddTransactionModalProps) {
+  const { t } = useTranslation();
+  const months = useMonthNames();
+  const TYPE_OPTIONS: SegmentOption<MovementType>[] = [
+    { value: 'expense', label: t('common.expense') },
+    { value: 'income', label: t('common.income') },
+  ];
   const isEditing = Boolean(transaction);
   const { data: categories = [] } = useCategories();
   const { data: accounts = [], isLoading: accountsLoading } = useAccounts();
@@ -159,7 +161,7 @@ export function AddTransactionModal({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos registrar el movimiento. Inténtalo de nuevo.';
+          : t('movements.modal.errorSave');
       setErrorMessage(message);
     }
   };
@@ -170,12 +172,12 @@ export function AddTransactionModal({
     if (!transaction) return;
 
     Alert.alert(
-      '¿Eliminar este movimiento?',
-      'El saldo de la cuenta se ajustará de nuevo.',
+      t('movements.modal.deleteConfirmTitle'),
+      t('movements.modal.deleteConfirmMessage'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             setErrorMessage('');
@@ -186,7 +188,7 @@ export function AddTransactionModal({
               const message =
                 error instanceof Error && error.message
                   ? error.message
-                  : 'No pudimos eliminar el movimiento.';
+                  : t('movements.modal.errorDelete');
               setErrorMessage(message);
             }
           },
@@ -203,7 +205,7 @@ export function AddTransactionModal({
   const accountOptions: SelectOption<string>[] = accounts.map((a) => ({
     value: a.name,
     label: a.name,
-    sub: accountSubtitle(a),
+    sub: accountSubtitle(a, t),
     color: a.color,
   }));
 
@@ -215,14 +217,14 @@ export function AddTransactionModal({
           {/* Cabecera */}
           <View style={styles.header}>
             <Pressable onPress={onClose} hitSlop={8}>
-              <Text style={styles.cancel}>Cancelar</Text>
+              <Text style={styles.cancel}>{t('common.cancel')}</Text>
             </Pressable>
             <Text style={styles.headerTitle}>
-              {isEditing ? 'Editar' : 'Nuevo'}
+              {isEditing ? t('movements.modal.titleEdit') : t('movements.modal.titleNew')}
             </Text>
             <Pressable onPress={handleSave} hitSlop={8} disabled={!canSave}>
               <Text style={[styles.save, !canSave && styles.saveDisabled]}>
-                {isSaving ? 'Guardando…' : 'Guardar'}
+                {isSaving ? t('movements.modal.saving') : t('common.save')}
               </Text>
             </Pressable>
           </View>
@@ -238,7 +240,7 @@ export function AddTransactionModal({
 
           {/* Monto */}
           <View style={styles.amountCard}>
-            <Text style={styles.amountLabel}>Monto</Text>
+            <Text style={styles.amountLabel}>{t('movements.modal.amount')}</Text>
             <View style={styles.amountRow}>
               <Text style={styles.amountSymbol}>{currency.symbol}</Text>
               <Text
@@ -266,8 +268,8 @@ export function AddTransactionModal({
                   { backgroundColor: selectedCategory?.color ?? colors.disabledFill },
                 ]}
               />
-              <Text style={styles.fieldLabel}>Categoría</Text>
-              <Text style={styles.fieldValue}>{selectedCategory?.name ?? '—'}</Text>
+              <Text style={styles.fieldLabel}>{t('common.category')}</Text>
+              <Text style={styles.fieldValue}>{selectedCategory?.name ?? t('common.placeholderDash')}</Text>
               <ChevronIcon />
             </Pressable>
 
@@ -279,24 +281,24 @@ export function AddTransactionModal({
                 pressed && styles.fieldPressed,
               ]}
             >
-              <Text style={styles.fieldLabel}>Cuenta</Text>
-              <Text style={styles.fieldValue}>{selectedAccount?.name ?? '—'}</Text>
+              <Text style={styles.fieldLabel}>{t('common.account')}</Text>
+              <Text style={styles.fieldValue}>{selectedAccount?.name ?? t('common.placeholderDash')}</Text>
               <ChevronIcon />
             </Pressable>
 
             <View style={[styles.field, styles.fieldBorder]}>
-              <Text style={styles.fieldLabel}>Fecha</Text>
+              <Text style={styles.fieldLabel}>{t('movements.modal.date')}</Text>
               <Text style={styles.fieldValue}>
                 {transaction
-                  ? formatDayMonth(transaction.date)
-                  : `Hoy, ${formatDayMonth(Date.now())}`}
+                  ? formatDayMonth(transaction.date, months)
+                  : t('movements.modal.today', { day: formatDayMonth(Date.now(), months) })}
               </Text>
             </View>
 
             <View style={styles.field}>
               <TextInput
                 style={styles.noteInput}
-                placeholder="Nota (opcional)"
+                placeholder={t('movements.modal.notePlaceholder')}
                 placeholderTextColor={colors.textTertiary}
                 value={note}
                 onChangeText={setNote}
@@ -307,10 +309,9 @@ export function AddTransactionModal({
           {needsAccount && (
             <Pressable onPress={onOpenAccounts} style={styles.notice}>
               <Text style={styles.noticeText}>
-                Todavía no tienes cuentas. Crea una para poder registrar
-                movimientos.
+                {t('movements.modal.needsAccountNotice')}
               </Text>
-              <Text style={styles.noticeAction}>Crear una cuenta</Text>
+              <Text style={styles.noticeAction}>{t('movements.modal.createAccount')}</Text>
             </Pressable>
           )}
 
@@ -323,7 +324,7 @@ export function AddTransactionModal({
                 pressed && styles.fieldPressed,
               ]}
             >
-              <Text style={styles.removeText}>Eliminar movimiento</Text>
+              <Text style={styles.removeText}>{t('movements.modal.deleteAction')}</Text>
             </Pressable>
           )}
 
@@ -342,7 +343,7 @@ export function AddTransactionModal({
       <SelectionSheet
         visible={catPickerOpen}
         onClose={() => setCatPickerOpen(false)}
-        title="Categoría"
+        title={t('common.category')}
         options={categoryOptions}
         selected={selectedCategory?.name ?? ''}
         onSelect={setCategoryName}
@@ -350,7 +351,7 @@ export function AddTransactionModal({
       <SelectionSheet
         visible={accPickerOpen}
         onClose={() => setAccPickerOpen(false)}
-        title="Cuenta"
+        title={t('common.account')}
         options={accountOptions}
         selected={selectedAccount?.name ?? ''}
         onSelect={setAccountName}

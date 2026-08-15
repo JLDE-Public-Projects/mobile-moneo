@@ -1,13 +1,21 @@
+import { TFunction } from 'i18next';
 import { DEFAULT_CATEGORIES } from '@/services/categories/category.constants';
 import { SegmentOption } from '@/components/molecules/SegmentedControl';
 import { TransactionFilter } from '@/services/transactions/transaction.types';
 
-/** Opciones del filtro de movimientos (control segmentado). */
-export const TRANSACTION_FILTERS: SegmentOption<TransactionFilter>[] = [
-  { value: 'all', label: 'Todos' },
-  { value: 'expense', label: 'Egresos' },
-  { value: 'income', label: 'Ingresos' },
-];
+/**
+ * Opciones del filtro de movimientos (control segmentado).
+ *
+ * Es una función y no una constante de módulo porque sus etiquetas dependen
+ * del idioma activo.
+ */
+export function transactionFilterOptions(t: TFunction): SegmentOption<TransactionFilter>[] {
+  return [
+    { value: 'all', label: t('transactionFilters.all') },
+    { value: 'expense', label: t('transactionFilters.expense') },
+    { value: 'income', label: t('transactionFilters.income') },
+  ];
+}
 
 /** Color de respaldo cuando una categoría no se encuentra. */
 const FALLBACK_COLOR = '#B4BFCA';

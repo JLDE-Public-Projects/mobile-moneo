@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
@@ -39,6 +40,7 @@ interface AccountsScreenProps {
  * pestaña "Cuentas".
  */
 export function AccountsScreen({ onOpenSettings }: AccountsScreenProps) {
+  const { t } = useTranslation();
   const { data: accounts = [], isLoading, isError, refetch } = useAccounts();
   const addAccount = useAddAccount();
   const updateAccount = useUpdateAccount();
@@ -72,8 +74,8 @@ export function AccountsScreen({ onOpenSettings }: AccountsScreenProps) {
       >
         {/* Cabecera con acceso a Ajustes */}
         <View style={styles.header}>
-          <Text style={styles.title}>Cuentas</Text>
-          <IconButton accessibilityLabel="Ajustes" onPress={onOpenSettings}>
+          <Text style={styles.title}>{t('accounts.title')}</Text>
+          <IconButton accessibilityLabel={t('common.settings')} onPress={onOpenSettings}>
             <SettingsIcon />
           </IconButton>
         </View>
@@ -82,23 +84,23 @@ export function AccountsScreen({ onOpenSettings }: AccountsScreenProps) {
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
-          errorText="No pudimos cargar tus cuentas."
+          errorText={t('common.errors.loadAccounts')}
         >
           {/* Patrimonio neto */}
           <View style={styles.netWorthCard}>
-            <Text style={styles.netWorthLabel}>Patrimonio neto</Text>
+            <Text style={styles.netWorthLabel}>{t('accounts.netWorth')}</Text>
             <Text style={styles.netWorthValue}>{formatMoney(netWorth, currency)}</Text>
           </View>
 
           {/* Lista de cuentas. Si aún no hay ninguna, la fila de "Agregar
               cuenta" queda sola y hace de invitación a crear la primera. */}
-          <SectionLabel style={styles.sectionSpacing}>Mis cuentas</SectionLabel>
+          <SectionLabel style={styles.sectionSpacing}>{t('accounts.myAccounts')}</SectionLabel>
           <Card>
             {accounts.map((account) => (
               <AccountRow
                 key={account.id}
                 name={account.name}
-                subtitle={accountSubtitle(account)}
+                subtitle={accountSubtitle(account, t)}
                 color={account.color}
                 balance={formatMoney(account.balance, currency)}
                 negative={account.balance < 0}
@@ -106,13 +108,13 @@ export function AccountsScreen({ onOpenSettings }: AccountsScreenProps) {
                 showSeparator
               />
             ))}
-            <AddRow label="Agregar cuenta" onPress={openNew} />
+            <AddRow label={t('accounts.addAccount')} onPress={openNew} />
           </Card>
 
           <Text style={styles.note}>
             {accounts.length === 0
-              ? 'Crea tu primera cuenta para empezar a registrar movimientos.'
-              : 'Toca una cuenta para editarla o eliminarla.'}
+              ? t('accounts.emptyNote')
+              : t('accounts.tapToEditNote')}
           </Text>
         </QueryState>
       </ScrollView>

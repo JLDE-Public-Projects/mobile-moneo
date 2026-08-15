@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { PlusIcon } from '@/components/icons/PlusIcon';
 import { IconProps } from '@/components/icons/types';
 import { colors, radius, spacing, typography } from '@/theme';
@@ -48,6 +49,7 @@ export function FloatingTabBar({
   onSelect,
   onAdd,
 }: FloatingTabBarProps) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   // Escala animada para la micro-interacción del botón "+".
   const fabScale = useRef(new Animated.Value(1)).current;
@@ -72,7 +74,7 @@ export function FloatingTabBar({
       >
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Nuevo movimiento"
+          accessibilityLabel={t('accessibility.newTransaction')}
           onPress={onAdd}
           onPressIn={() => animateFab(0.92)}
           onPressOut={() => animateFab(1)}

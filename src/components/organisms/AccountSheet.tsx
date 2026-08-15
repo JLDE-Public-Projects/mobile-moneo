@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { Button } from '@/components/atoms/Button';
 import { FormMessage } from '@/components/atoms/FormMessage';
 import { SegmentedControl } from '@/components/molecules/SegmentedControl';
 import {
-  ACCOUNT_KIND_OPTIONS,
+  accountKindOptions,
   balanceLabel,
   DEFAULT_ACCOUNT_KIND,
 } from '@/services/accounts/account.constants';
@@ -46,6 +47,7 @@ export function AccountSheet({
   onSave,
   onRemove,
 }: AccountSheetProps) {
+  const { t } = useTranslation();
   const isEditing = Boolean(account);
 
   const [kind, setKind] = useState<AccountKind>(DEFAULT_ACCOUNT_KIND);
@@ -82,7 +84,7 @@ export function AccountSheet({
   const handleSave = async () => {
     if (isSubmitting) return;
     if (!canSubmit) {
-      setErrorMessage('Escribe un nombre para la cuenta.');
+      setErrorMessage(t('accounts.sheet.errorEmptyName'));
       return;
     }
 
@@ -106,7 +108,7 @@ export function AccountSheet({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos guardar la cuenta. Inténtalo de nuevo.';
+          : t('accounts.sheet.errorSave');
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -120,12 +122,12 @@ export function AccountSheet({
     if (!account || !onRemove) return;
 
     Alert.alert(
-      `¿Eliminar ${account.name}?`,
-      'Los movimientos que registraste con esta cuenta se conservan en tu historial.',
+      t('accounts.sheet.deleteConfirmTitle', { name: account.name }),
+      t('accounts.sheet.deleteConfirmMessage'),
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Eliminar',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             setIsSubmitting(true);
@@ -137,7 +139,7 @@ export function AccountSheet({
               const message =
                 error instanceof Error && error.message
                   ? error.message
-                  : 'No pudimos eliminar la cuenta.';
+                  : t('accounts.sheet.errorDelete');
               setErrorMessage(message);
             } finally {
               setIsSubmitting(false);
@@ -151,13 +153,13 @@ export function AccountSheet({
   return (
     <BottomSheet visible={visible} onClose={onClose}>
       <Text style={styles.title}>
-        {isEditing ? 'Editar cuenta' : 'Agregar cuenta'}
+        {isEditing ? t('accounts.sheet.titleEdit') : t('accounts.sheet.titleNew')}
       </Text>
 
       {/* Tipo de cuenta */}
       <View style={styles.segment}>
         <SegmentedControl
-          options={ACCOUNT_KIND_OPTIONS}
+          options={accountKindOptions(t)}
           value={kind}
           onChange={setKind}
         />
@@ -169,7 +171,7 @@ export function AccountSheet({
           <View style={[styles.swatch, { backgroundColor: swatchColor }]} />
           <TextInput
             style={styles.input}
-            placeholder="Nombre de la cuenta"
+            placeholder={t('accounts.sheet.namePlaceholder')}
             placeholderTextColor={colors.textTertiary}
             value={name}
             onChangeText={setName}
@@ -178,11 +180,11 @@ export function AccountSheet({
 
         {/* Saldo / deuda */}
         <View style={[styles.row, !isCredit && styles.rowLast]}>
-          <Text style={styles.label}>{balanceLabel(kind)}</Text>
+          <Text style={styles.label}>{balanceLabel(kind, t)}</Text>
           <Text style={styles.currencySign}>$</Text>
           <TextInput
             style={[styles.input, styles.amountInput]}
-            placeholder="0"
+            placeholder={t('accounts.sheet.amountPlaceholder')}
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
             value={balance}
@@ -193,10 +195,10 @@ export function AccountSheet({
         {/* Fecha de corte (solo crédito) */}
         {isCredit && (
           <View style={[styles.row, styles.rowLast]}>
-            <Text style={[styles.label, styles.labelGrow]}>Fecha de corte</Text>
+            <Text style={[styles.label, styles.labelGrow]}>{t('accounts.sheet.cutDay')}</Text>
             <TextInput
               style={[styles.input, styles.cutInput]}
-              placeholder="Día (1-31)"
+              placeholder={t('accounts.sheet.cutDayPlaceholder')}
               placeholderTextColor={colors.textTertiary}
               keyboardType="number-pad"
               value={cutDay}
@@ -209,7 +211,7 @@ export function AccountSheet({
       <FormMessage message={errorMessage} />
 
       <Button
-        label={isEditing ? 'Guardar cambios' : 'Guardar cuenta'}
+        label={isEditing ? t('common.saveChanges') : t('accounts.sheet.saveNew')}
         onPress={handleSave}
         disabled={!canSubmit}
         loading={isSubmitting}
@@ -217,7 +219,7 @@ export function AccountSheet({
 
       {isEditing && onRemove && (
         <Button
-          label="Eliminar cuenta"
+          label={t('accounts.sheet.deleteAction')}
           variant="secondary"
           destructive
           onPress={handleRemove}

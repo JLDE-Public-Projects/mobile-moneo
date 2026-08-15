@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SettingsIcon } from '@/components/icons/SettingsIcon';
@@ -44,6 +45,7 @@ export function ExpensesScreen({
   onOpenBudget,
   onOpenCategory,
 }: ExpensesScreenProps) {
+  const { t } = useTranslation();
   const { data: transactions = [] } = useTransactions();
   const { data: budgetCategories = [] } = useCategories();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
@@ -96,7 +98,7 @@ export function ExpensesScreen({
    * categoría con la que más gasta, que es la única referencia disponible.
    */
   const categoryStats = (c: CategoryTotal) => {
-    const share = `${Math.round((c.total / total) * 100)}% del total`;
+    const share = t('expenses.pctOfTotal', { pct: Math.round((c.total / total) * 100) });
     const budget = budgetByCategory.get(c.name);
 
     if (!budget) {
@@ -107,8 +109,8 @@ export function ExpensesScreen({
     return {
       share,
       hint: over
-        ? `Te pasaste ${money(c.total - budget)} del límite`
-        : `Quedan ${money(budget - c.total)} de ${money(budget)}`,
+        ? t('expenses.over', { amount: money(c.total - budget) })
+        : t('expenses.remaining', { remaining: money(budget - c.total), budget: money(budget) }),
       barWidth: (c.total / budget) * 100,
       over,
     };
@@ -123,19 +125,19 @@ export function ExpensesScreen({
       >
         {/* Cabecera con acceso a Ajustes */}
         <View style={styles.header}>
-          <Text style={styles.title}>Gastos</Text>
-          <IconButton accessibilityLabel="Ajustes" onPress={onOpenSettings}>
+          <Text style={styles.title}>{t('expenses.title')}</Text>
+          <IconButton accessibilityLabel={t('common.settings')} onPress={onOpenSettings}>
             <SettingsIcon />
           </IconButton>
         </View>
 
         {isEmpty ? (
-          <Text style={styles.empty}>Aún no tienes egresos este mes.</Text>
+          <Text style={styles.empty}>{t('expenses.empty')}</Text>
         ) : (
           <>
             {/* Total + barra apilada */}
             <View style={styles.totalCard}>
-              <Text style={styles.totalLabel}>Total egresos</Text>
+              <Text style={styles.totalLabel}>{t('expenses.totalLabel')}</Text>
               <Text style={styles.totalValue}>
                 {currency.symbol}
                 {formatNumber(total, currency)}
@@ -177,7 +179,7 @@ export function ExpensesScreen({
             {/* Acceso al presupuesto */}
             <Card style={styles.budgetCard}>
               <ListRow
-                label="Ajustar presupuesto"
+                label={t('expenses.adjustBudget')}
                 tintColor={colors.accent}
                 onPress={onOpenBudget}
               />

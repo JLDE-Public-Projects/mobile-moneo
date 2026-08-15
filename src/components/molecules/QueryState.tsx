@@ -1,5 +1,6 @@
 import React from 'react';
 import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {useTranslation} from 'react-i18next';
 import {Card} from '@/components/molecules/Card';
 import {colors, spacing, typography} from '@/theme';
 
@@ -31,6 +32,7 @@ export function QueryState({
                               errorText,
                               children,
                            }: QueryStateProps) {
+   const {t} = useTranslation();
    if (isLoading) {
       return <View style={styles.centered}>
          <ActivityIndicator color={colors.accent}/>
@@ -41,7 +43,7 @@ export function QueryState({
       return <Card>
          <View style={styles.centered}>
             <Text style={styles.errorText}>{errorText}</Text>
-            <Text style={styles.retry} onPress={onRetry}>Reintentar</Text>
+            <Text style={styles.retry} onPress={onRetry}>{t('common.retry')}</Text>
          </View>
       </Card>
    }

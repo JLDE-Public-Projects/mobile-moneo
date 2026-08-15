@@ -14,8 +14,8 @@ export interface Currency {
   code: CurrencyCode;
   /** Símbolo mostrado junto al importe. */
   symbol: string;
-  /** Nombre legible. */
-  name: string;
+  /** Clave de traducción del nombre legible (ver `currencies.*` en i18n). */
+  nameKey: 'currencies.cop' | 'currencies.usd' | 'currencies.eur';
   /** Separador de miles. */
   thousandSep: string;
   /** Separador decimal. */
@@ -24,9 +24,9 @@ export interface Currency {
 
 /** Monedas disponibles, tomadas del diseño. */
 export const CURRENCIES: Currency[] = [
-  { code: 'COP', symbol: '$', name: 'Peso colombiano', thousandSep: '.', decimalSep: ',' },
-  { code: 'USD', symbol: '$', name: 'Dólar estadounidense', thousandSep: ',', decimalSep: '.' },
-  { code: 'EUR', symbol: '€', name: 'Euro', thousandSep: '.', decimalSep: ',' },
+  { code: 'COP', symbol: '$', nameKey: 'currencies.cop', thousandSep: '.', decimalSep: ',' },
+  { code: 'USD', symbol: '$', nameKey: 'currencies.usd', thousandSep: ',', decimalSep: '.' },
+  { code: 'EUR', symbol: '€', nameKey: 'currencies.eur', thousandSep: '.', decimalSep: ',' },
 ];
 
 /** Moneda por defecto. */

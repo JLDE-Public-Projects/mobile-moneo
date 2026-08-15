@@ -1,6 +1,9 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+// Efecto secundario: inicializa i18next antes de que cualquier pantalla llame
+// a useTranslation(). Debe importarse antes que los componentes que lo usan.
+import '@/i18n';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {AuthFlow} from '@/screens/auth/AuthFlow';
 import {MainNavigator} from '@/navigation/MainNavigator';

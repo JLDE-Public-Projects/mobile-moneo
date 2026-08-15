@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
@@ -32,6 +33,7 @@ interface CategoriesScreenProps {
  * categoría de …" al final de cada una.
  */
 export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
+  const { t } = useTranslation();
   const { data: categories = [], isLoading, isError, refetch } = useCategories();
   const addCategory = useAddCategory();
   const removeCategory = useRemoveCategory();
@@ -64,7 +66,7 @@ export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
             key={category.id}
             name={category.name}
             color={category.color}
-            sub="Sin movimientos"
+            sub={t('categories.noMovements')}
             onRemove={() => removeCategory.mutate(category.id)}
             showSeparator
           />
@@ -82,22 +84,21 @@ export function CategoriesScreen({ onBack }: CategoriesScreenProps) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.backRow}>
-          <BackLink label="Ajustes" onPress={onBack} />
+          <BackLink label={t('common.settings')} onPress={onBack} />
         </View>
-        <Text style={styles.title}>Categorías</Text>
+        <Text style={styles.title}>{t('categories.title')}</Text>
 
         <QueryState
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
-          errorText="No pudimos cargar tus categorías."
+          errorText={t('common.errors.loadCategories')}
         >
-          {renderSection('Egresos', expenses, 'expense', 'Nueva categoría de egreso', false)}
-          {renderSection('Ingresos', incomes, 'income', 'Nueva categoría de ingreso', true)}
+          {renderSection(t('categories.expensesSection'), expenses, 'expense', t('categories.newExpense'), false)}
+          {renderSection(t('categories.incomeSection'), incomes, 'income', t('categories.newIncome'), true)}
 
           <Text style={styles.note}>
-            Las categorías con movimientos registrados no se pueden borrar. Cada
-            categoría nueva empieza sin límite de presupuesto.
+            {t('categories.note')}
           </Text>
         </QueryState>
       </ScrollView>

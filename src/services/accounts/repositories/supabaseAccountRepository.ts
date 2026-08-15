@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { AccountRepository } from '@/services/accounts/account.repository';
 import { Account, AccountKind } from '@/services/accounts/account.types';
 import { supabase } from '@/services/supabase/client';
@@ -60,7 +61,7 @@ export const supabaseAccountRepository: AccountRepository = {
          .order('created_at', { ascending: true });
 
       if (error) {
-         throw new Error('No pudimos cargar tus cuentas.');
+         throw new Error(i18n.t('accounts.repository.loadFailed'));
       }
       return (data as AccountRow[]).map(toAccount);
    },
@@ -82,7 +83,7 @@ export const supabaseAccountRepository: AccountRepository = {
          .single();
 
       if (error || !data) {
-         throw new Error('No pudimos crear la cuenta.');
+         throw new Error(i18n.t('accounts.repository.addFailed'));
       }
       return toAccount(data as AccountRow);
    },
@@ -104,7 +105,7 @@ export const supabaseAccountRepository: AccountRepository = {
          .single();
 
       if (error || !data) {
-         throw new Error('No pudimos guardar los cambios.');
+         throw new Error(i18n.t('accounts.repository.updateFailed'));
       }
       return toAccount(data as AccountRow);
    },
@@ -112,7 +113,7 @@ export const supabaseAccountRepository: AccountRepository = {
    async remove(id) {
       const { error } = await supabase.from('accounts').delete().eq('id', id);
       if (error) {
-         throw new Error('No pudimos eliminar la cuenta.');
+         throw new Error(i18n.t('accounts.repository.removeFailed'));
       }
    },
 };

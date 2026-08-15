@@ -50,8 +50,14 @@ export const MIN_PASSWORD_LENGTH = 6;
 /**
  * Texto de ayuda del campo de clave. Se deriva de la constante para que el
  * mínimo mostrado y el validado no puedan quedar desincronizados.
+ *
+ * Es una función —no una constante fijada al cargar el módulo— porque el
+ * texto depende del idioma activo, y recibe `t` en vez de usar el hook
+ * `useTranslation` para poder llamarse también fuera de un componente.
  */
-export const PASSWORD_PLACEHOLDER = `Mínimo ${MIN_PASSWORD_LENGTH} caracteres`;
+export function passwordPlaceholder(t: (key: 'auth.passwordPlaceholder', options: {min: number}) => string): string {
+  return t('auth.passwordPlaceholder', { min: MIN_PASSWORD_LENGTH });
+}
 
 /** Devuelve true cuando la contraseña cumple la longitud mínima. */
 export function isValidPassword(value: string): boolean {

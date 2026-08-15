@@ -1,6 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import {AccessibilityInfo, Animated, Easing, StyleSheet, Text, View} from 'react-native';
 import Svg, {Circle, Path, Rect} from 'react-native-svg';
+import {useTranslation} from 'react-i18next';
 import {colors, spacing, typography} from '@/theme';
 
 /** Duración de la entrada de cada pieza. */
@@ -59,6 +60,7 @@ function Piece({
  * reducir movimiento se queda únicamente el fundido.
  */
 export function EmptyTransactions({month}: { month: string }) {
+   const {t} = useTranslation();
    const [reduceMotion, setReduceMotion] = React.useState(false);
 
    // Respeta el ajuste de accesibilidad del sistema.
@@ -145,12 +147,12 @@ export function EmptyTransactions({month}: { month: string }) {
       </Animated.View>
 
       <Piece delay={STAGGER} reduceMotion={reduceMotion} style={styles.textBlock}>
-         <Text style={styles.title}>Tu {month} está en blanco</Text>
+         <Text style={styles.title}>{t('movements.emptyState.title', {month})}</Text>
       </Piece>
 
       <Piece delay={STAGGER * 2} reduceMotion={reduceMotion} style={styles.textBlock}>
          <Text style={styles.subtitle}>
-            Toca el botón + para registrar tu primer movimiento del mes.
+            {t('movements.emptyState.subtitle')}
          </Text>
       </Piece>
    </View>

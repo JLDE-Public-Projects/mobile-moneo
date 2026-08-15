@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { CategoryRepository } from '@/services/categories/category.repository';
 import { Category } from '@/services/categories/category.types';
 import { supabase } from '@/services/supabase/client';
@@ -42,7 +43,7 @@ async function fetchCategories(): Promise<Category[]> {
     .order('created_at', { ascending: true });
 
   if (error) {
-    throw new Error('No pudimos cargar las categorías.');
+    throw new Error(i18n.t('categories.repository.loadFailed'));
   }
   return (data as CategoryRow[]).map(toCategory);
 }
@@ -81,7 +82,7 @@ export const supabaseCategoryRepository: CategoryRepository = {
       .single();
 
     if (error || !data) {
-      throw new Error('No pudimos crear la categoría.');
+      throw new Error(i18n.t('categories.repository.addFailed'));
     }
     return toCategory(data as CategoryRow);
   },
@@ -89,7 +90,7 @@ export const supabaseCategoryRepository: CategoryRepository = {
   async remove(id) {
     const { error } = await supabase.from('categories').delete().eq('id', id);
     if (error) {
-      throw new Error('No pudimos eliminar la categoría.');
+      throw new Error(i18n.t('categories.repository.removeFailed'));
     }
   },
 
@@ -100,7 +101,7 @@ export const supabaseCategoryRepository: CategoryRepository = {
       .eq('id', id);
 
     if (error) {
-      throw new Error('No pudimos actualizar el presupuesto.');
+      throw new Error(i18n.t('categories.repository.updateBudgetFailed'));
     }
   },
 };

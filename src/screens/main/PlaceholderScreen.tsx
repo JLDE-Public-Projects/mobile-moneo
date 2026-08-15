@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SettingsIcon } from '@/components/icons/SettingsIcon';
@@ -29,9 +30,10 @@ export const TAB_BAR_SPACE = 110;
  */
 export function PlaceholderScreen({
   title,
-  note = 'En construcción',
+  note,
   onOpenSettings,
 }: PlaceholderScreenProps) {
+  const { t } = useTranslation();
   return (
     <Screen bottomInset={false}>
       <StatusBar style="dark" />
@@ -42,14 +44,14 @@ export function PlaceholderScreen({
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
           {onOpenSettings && (
-            <IconButton accessibilityLabel="Ajustes" onPress={onOpenSettings}>
+            <IconButton accessibilityLabel={t('common.settings')} onPress={onOpenSettings}>
               <SettingsIcon />
             </IconButton>
           )}
         </View>
 
         <View style={styles.emptyState}>
-          <Text style={styles.note}>{note}</Text>
+          <Text style={styles.note}>{note ?? t('placeholder.underConstruction')}</Text>
         </View>
       </ScrollView>
     </Screen>

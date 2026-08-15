@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { colors, typography } from '@/theme';
 
 interface SearchBarProps {
@@ -9,7 +10,7 @@ interface SearchBarProps {
   /** Se ejecuta al cambiar el texto. */
   onChangeText: (value: string) => void;
   /** Placeholder del campo. */
-  placeholder?: string;
+  placeholder: string;
 }
 
 /**
@@ -19,8 +20,9 @@ interface SearchBarProps {
 export function SearchBar({
   value,
   onChangeText,
-  placeholder = 'Buscar',
+  placeholder,
 }: SearchBarProps) {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       <Svg width={16} height={16} viewBox="0 0 16 16" fill="none">
@@ -49,7 +51,7 @@ export function SearchBar({
           onPress={() => onChangeText('')}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Limpiar búsqueda"
+          accessibilityLabel={t('accessibility.clearSearch')}
           style={styles.clear}
         >
           <Svg width={9} height={9} viewBox="0 0 9 9">

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { FloatingTabBar, TabItemConfig } from '@/components/organisms/FloatingTabBar';
 import { HomeIcon } from '@/components/icons/HomeIcon';
 import { MovementsIcon } from '@/components/icons/MovementsIcon';
@@ -34,14 +35,6 @@ type DetailScreen =
   | 'subs'
   | null;
 
-/** Configuración de los tabs: id, etiqueta e ícono. */
-const TABS: TabItemConfig[] = [
-  { id: 'home', label: 'Resumen', Icon: HomeIcon },
-  { id: 'tx', label: 'Movimientos', Icon: MovementsIcon },
-  { id: 'gastos', label: 'Gastos', Icon: ExpensesIcon },
-  { id: 'accounts', label: 'Cuentas', Icon: AccountsIcon },
-];
-
 /**
  * Navegador principal de la app autenticada.
  *
@@ -54,6 +47,15 @@ const TABS: TabItemConfig[] = [
  * migrarse a una librería de navegación conservando esta misma estructura.
  */
 export function MainNavigator() {
+  const { t } = useTranslation();
+  // Configuración de los tabs: id, etiqueta e ícono. Es una función y no una
+  // constante de módulo porque las etiquetas dependen del idioma activo.
+  const TABS: TabItemConfig[] = [
+    { id: 'home', label: t('settings.backToHome'), Icon: HomeIcon },
+    { id: 'tx', label: t('movements.title'), Icon: MovementsIcon },
+    { id: 'gastos', label: t('expenses.title'), Icon: ExpensesIcon },
+    { id: 'accounts', label: t('accounts.title'), Icon: AccountsIcon },
+  ];
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [detail, setDetail] = useState<DetailScreen>(null);
   const [addOpen, setAddOpen] = useState(false);

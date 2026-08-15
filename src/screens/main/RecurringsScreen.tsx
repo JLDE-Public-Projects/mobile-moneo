@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
@@ -42,6 +43,7 @@ interface RecurringsScreenProps {
  * importe, porque el previsto es una estimación que suele variar.
  */
 export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
+  const { t } = useTranslation();
   const { data: recurrings = [] } = useRecurrings();
   const { data: transactions = [] } = useTransactions();
   const { data: accounts = [] } = useAccounts();
@@ -95,8 +97,8 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
   const startRegister = (r: Recurring) => {
     if (!r.accountId) {
       Alert.alert(
-        'Falta la cuenta',
-        `La cuenta de "${r.name}" ya no existe. Edita el recurrente y elige una para poder registrarlo.`,
+        t('recurrings.missingAccountTitle'),
+        t('recurrings.missingAccountMessage', { name: r.name }),
       );
       return;
     }
@@ -141,21 +143,21 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.backRow}>
-          <BackLink label="Atrás" onPress={onBack} />
+          <BackLink label={t('common.back')} onPress={onBack} />
         </View>
-        <Text style={styles.title}>Recurrentes</Text>
+        <Text style={styles.title}>{t('recurrings.title')}</Text>
 
         {/* Totales */}
         <View style={styles.totalsCard}>
           <View style={styles.totalCol}>
-            <Text style={styles.totalLabel}>Al mes</Text>
+            <Text style={styles.totalLabel}>{t('recurrings.perMonth')}</Text>
             <Text style={[styles.totalValue, monthly < 0 && styles.totalNegative]}>
               {formatMoney(monthly, currency)}
             </Text>
           </View>
           <View style={styles.totalsDivider} />
           <View style={[styles.totalCol, styles.totalColRight]}>
-            <Text style={styles.totalLabel}>Al año</Text>
+            <Text style={styles.totalLabel}>{t('recurrings.perYear')}</Text>
             <Text style={[styles.totalValue, monthly < 0 && styles.totalNegative]}>
               {formatMoney(monthly * 12, currency)}
             </Text>
@@ -164,7 +166,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
 
         {/* Por pagar */}
         <SectionLabel style={styles.sectionSpacing}>
-          {pending.length ? `Pendientes (${pending.length})` : 'Pendientes'}
+          {pending.length ? t('recurrings.pendingCount', { count: pending.length }) : t('recurrings.pending')}
         </SectionLabel>
         <Card>
           {pending.map((r) => {
@@ -178,13 +180,14 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                   </Text>
                   <View style={styles.subRow}>
                     <Text style={[styles.sub, overdue && styles.subOverdue]}>
-                      {overdue ? 'Venció' : 'Vence'} el día {r.day} ·{' '}
+                      {overdue ? t('recurrings.overdue') : t('recurrings.due')}
+                      {t('recurrings.dueOnDay', { day: r.day })}
                     </Text>
                     <Pressable
                       onPress={() => setActive.mutate({ id: r.id, active: false })}
                       hitSlop={6}
                     >
-                      <Text style={styles.link}>Pausar</Text>
+                      <Text style={styles.link}>{t('recurrings.pause')}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -195,19 +198,19 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                   onPress={() => startRegister(r)}
                   style={({ pressed }) => [styles.action, pressed && styles.pressed]}
                 >
-                  <Text style={styles.actionText}>Registrar</Text>
+                  <Text style={styles.actionText}>{t('recurrings.register')}</Text>
                 </Pressable>
               </View>
             );
           })}
-          <AddRow label="Nueva recurrente" onPress={() => setSheetVisible(true)} />
+          <AddRow label={t('recurrings.newRecurring')} onPress={() => setSheetVisible(true)} />
         </Card>
 
         {/* Pagadas este mes */}
         {done.length > 0 && (
           <>
             <SectionLabel style={styles.sectionSpacing}>
-              Pagadas este mes
+              {t('recurrings.paidThisMonth')}
             </SectionLabel>
             <Card>
               {done.map((r, index) => (
@@ -222,7 +225,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                     <Text style={styles.name} numberOfLines={1}>
                       {r.name}
                     </Text>
-                    <Text style={styles.sub}>Pagado el día {r.day}</Text>
+                    <Text style={styles.sub}>{t('recurrings.paidOnDay', { day: r.day })}</Text>
                   </View>
                   <Text style={styles.amountMuted}>{money(Math.abs(r.amount))}</Text>
                   <Text style={styles.check}>✓</Text>
@@ -235,7 +238,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         {/* Pausadas */}
         {paused.length > 0 && (
           <>
-            <SectionLabel style={styles.sectionSpacing}>Pausadas</SectionLabel>
+            <SectionLabel style={styles.sectionSpacing}>{t('recurrings.paused')}</SectionLabel>
             <Card>
               {paused.map((r, index) => (
                 <View
@@ -247,14 +250,14 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
                     <Text style={styles.nameMuted} numberOfLines={1}>
                       {r.name}
                     </Text>
-                    <Text style={styles.subMuted}>Cada día {r.day}</Text>
+                    <Text style={styles.subMuted}>{t('recurrings.everyDay', { day: r.day })}</Text>
                   </View>
                   <Text style={styles.amountMuted}>{money(Math.abs(r.amount))}</Text>
                   <Pressable
                     onPress={() => setActive.mutate({ id: r.id, active: true })}
                     style={({ pressed }) => [styles.resume, pressed && styles.pressed]}
                   >
-                    <Text style={styles.resumeText}>Reanudar</Text>
+                    <Text style={styles.resumeText}>{t('recurrings.resume')}</Text>
                   </Pressable>
                 </View>
               ))}
@@ -263,9 +266,7 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         )}
 
         <Text style={styles.note}>
-          Una recurrente es un pago que se repite cada mes. Moneo no la cobra
-          sola: te la recuerda y, con "Registrar", la convierte en un movimiento.
-          Al pausarla deja de contarse.
+          {t('recurrings.explanationNote')}
         </Text>
       </ScrollView>
 

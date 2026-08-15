@@ -1,6 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Card } from '@/components/molecules/Card';
@@ -30,6 +31,7 @@ interface HistoryScreenProps {
  * Solo aparecen los meses desde el primer movimiento registrado.
  */
 export function HistoryScreen({ onBack }: HistoryScreenProps) {
+  const { t } = useTranslation();
   const {
     data: months = [],
     isLoading,
@@ -51,22 +53,22 @@ export function HistoryScreen({ onBack }: HistoryScreenProps) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.backRow}>
-          <BackLink label="Atrás" onPress={onBack} />
+          <BackLink label={t('common.back')} onPress={onBack} />
         </View>
-        <Text style={styles.title}>Historial</Text>
+        <Text style={styles.title}>{t('history.title')}</Text>
 
         <QueryState
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
-          errorText="No pudimos cargar tu historial."
+          errorText={t('common.errors.loadHistory')}
         >
         {/* Gráfico de balance por mes */}
         <View style={styles.chartCard}>
           <Text style={styles.chartLabel}>
             {months.length === 1
-              ? 'Balance del mes'
-              : `Balance por mes · ${months.length} meses`}
+              ? t('history.balanceOfMonth')
+              : t('history.balanceByMonths', { count: months.length })}
           </Text>
           <View style={styles.chart}>
             {months.map((m) => {

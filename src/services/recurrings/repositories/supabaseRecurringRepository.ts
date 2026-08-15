@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { RecurringRepository } from '@/services/recurrings/recurring.repository';
 import { Recurring } from '@/services/recurrings/recurring.types';
 import { supabase } from '@/services/supabase/client';
@@ -66,7 +67,7 @@ export const supabaseRecurringRepository: RecurringRepository = {
          .order('day', { ascending: true });
 
       if (error) {
-         throw new Error('No pudimos cargar tus recurrentes.');
+         throw new Error(i18n.t('recurrings.repository.loadFailed'));
       }
       return (data as RecurringRow[]).map(toRecurring);
    },
@@ -79,7 +80,7 @@ export const supabaseRecurringRepository: RecurringRepository = {
          .single();
 
       if (error || !data) {
-         throw new Error('No pudimos crear el recurrente.');
+         throw new Error(i18n.t('recurrings.repository.addFailed'));
       }
       return toRecurring(data as RecurringRow);
    },
@@ -93,7 +94,7 @@ export const supabaseRecurringRepository: RecurringRepository = {
          .single();
 
       if (error || !data) {
-         throw new Error('No pudimos guardar los cambios.');
+         throw new Error(i18n.t('recurrings.repository.updateFailed'));
       }
       return toRecurring(data as RecurringRow);
    },
@@ -105,7 +106,7 @@ export const supabaseRecurringRepository: RecurringRepository = {
          .eq('id', id);
 
       if (error) {
-         throw new Error('No pudimos actualizar el importe.');
+         throw new Error(i18n.t('recurrings.repository.updateAmountFailed'));
       }
    },
 
@@ -116,14 +117,14 @@ export const supabaseRecurringRepository: RecurringRepository = {
          .eq('id', id);
 
       if (error) {
-         throw new Error('No pudimos cambiar el estado del recurrente.');
+         throw new Error(i18n.t('recurrings.repository.setActiveFailed'));
       }
    },
 
    async remove(id) {
       const { error } = await supabase.from('recurrings').delete().eq('id', id);
       if (error) {
-         throw new Error('No pudimos eliminar el recurrente.');
+         throw new Error(i18n.t('recurrings.repository.removeFailed'));
       }
    },
 };

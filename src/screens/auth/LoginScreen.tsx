@@ -9,6 +9,7 @@ import {
    View,
 } from 'react-native';
 import {StatusBar} from 'expo-status-bar';
+import {useTranslation} from 'react-i18next';
 import {Screen} from '@/components/layout/Screen';
 import {BrandMark} from '@/components/atoms/BrandMark';
 import {Button} from '@/components/atoms/Button';
@@ -17,7 +18,8 @@ import {FormMessage} from '@/components/atoms/FormMessage';
 import {Card} from '@/components/molecules/Card';
 import {InputRow} from '@/components/molecules/InputRow';
 import {useLoginForm, LoginCredentials} from '@/hooks/useLoginForm';
-import {PASSWORD_PLACEHOLDER} from '@/utils/validation';
+import {passwordPlaceholder} from '@/utils/validation';
+import {useMonthNames} from '@/hooks/useMonthNames';
 import {colors, layout, spacing, typography} from '@/theme';
 
 /** Callbacks de navegación/acción que la pantalla delega en su contenedor. */
@@ -43,6 +45,9 @@ const STAGGER = 70;
  * al abrir la app.
  */
 export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreenProps) {
+   const {t} = useTranslation();
+   const months = useMonthNames();
+   const currentMonthName = months.long[new Date().getMonth()].toLowerCase();
 
    const form = useLoginForm({onSubmit: onLogin});
 
@@ -55,16 +60,16 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                {/* Cabecera de marca */}
                <FadeInUp delay={0} style={styles.header}>
                   <BrandMark/>
-                  <Text style={styles.title}>Moneo</Text>
-                  <Text style={styles.subtitle}>Ingresa para ver agosto</Text>
+                  <Text style={styles.title}>{t('auth.brand')}</Text>
+                  <Text style={styles.subtitle}>{t('auth.login.subtitle', {month: currentMonthName})}</Text>
                </FadeInUp>
 
                {/* Credenciales */}
                <FadeInUp delay={STAGGER} style={styles.form}>
                   <Card>
                      <InputRow
-                        label="Usuario"
-                        placeholder="Tu usuario"
+                        label={t('auth.login.username')}
+                        placeholder={t('auth.login.usernamePlaceholder')}
                         autoCapitalize="none"
                         autoCorrect={false}
                         textContentType="username"
@@ -74,8 +79,8 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                         showSeparator
                      />
                      <InputRow
-                        label="Clave"
-                        placeholder={PASSWORD_PLACEHOLDER}
+                        label={t('auth.login.password')}
+                        placeholder={passwordPlaceholder(t)}
                         secureTextEntry
                         textContentType="password"
                         value={form.password}
@@ -92,7 +97,7 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                {/* Acción principal */}
                <FadeInUp delay={STAGGER * 2}>
                   <Button
-                     label="Entrar"
+                     label={t('auth.login.submit')}
                      onPress={form.submit}
                      disabled={!form.canSubmit}
                      loading={form.isSubmitting}
@@ -102,7 +107,7 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
                {/* Acción biométrica */}
                <FadeInUp delay={STAGGER * 3}>
                   <Button
-                     label="Entrar con Face ID"
+                     label={t('auth.login.biometric')}
                      variant="secondary"
                      onPress={onBiometricLogin ?? (() => {
                      })}
@@ -113,17 +118,16 @@ export function LoginScreen({onLogin, onRegister, onBiometricLogin}: LoginScreen
 
                {/* Enlace a registro */}
                <FadeInUp delay={STAGGER * 4} style={styles.registerRow}>
-                  <Text style={styles.mutedText}>¿Primera vez?</Text>
+                  <Text style={styles.mutedText}>{t('auth.login.firstTime')}</Text>
                   <Pressable onPress={onRegister} hitSlop={8}>
-                     <Text style={styles.link}>Crear cuenta</Text>
+                     <Text style={styles.link}>{t('auth.login.createAccount')}</Text>
                   </Pressable>
                </FadeInUp>
 
                <View style={styles.flex}/>
 
                <Text style={styles.legal}>
-                  Tus movimientos se sincronizan cifrados.{'\n'}
-                  Moneo funciona solo por invitación.
+                  {t('auth.legalLogin')}
                </Text>
             </ScrollView>
          </KeyboardAvoidingView>

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { Card } from '@/components/molecules/Card';
@@ -31,6 +32,7 @@ interface BudgetScreenProps {
  * persiste en la categoría.
  */
 export function BudgetScreen({ onBack }: BudgetScreenProps) {
+  const { t } = useTranslation();
   const { data: categories = [], isLoading, isError, refetch } = useCategories();
   const { data: transactions = [] } = useTransactions();
   const { adjust } = useBudgetAdjuster();
@@ -64,19 +66,19 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.backRow}>
-          <BackLink label="Atrás" onPress={onBack} />
+          <BackLink label={t('common.back')} onPress={onBack} />
         </View>
-        <Text style={styles.title}>Presupuesto</Text>
+        <Text style={styles.title}>{t('budget.title')}</Text>
 
         <QueryState
           isLoading={isLoading}
           isError={isError}
           onRetry={refetch}
-          errorText="No pudimos cargar tu presupuesto."
+          errorText={t('common.errors.loadBudget')}
         >
         {/* Total asignado vs gastado */}
         <View style={styles.summaryCard}>
-          <Text style={styles.summaryLabel}>Asignado / gastado</Text>
+          <Text style={styles.summaryLabel}>{t('budget.assignedSpent')}</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryTotal}>
               {currency.symbol}
@@ -84,7 +86,7 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
             </Text>
             <Text style={styles.summarySpent}>
               {currency.symbol}
-              {formatNumber(totalSpent, currency)} usado
+              {formatNumber(totalSpent, currency)}{t('budget.usedSuffix')}
             </Text>
           </View>
         </View>
@@ -99,7 +101,10 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
               <BudgetRow
                 key={c.id}
                 name={c.name}
-                label={`${formatNumber(spent, currency)} de ${formatNumber(c.budget, currency)}`}
+                label={t('budget.rowLabel', {
+                  spent: formatNumber(spent, currency),
+                  budget: formatNumber(c.budget, currency),
+                })}
                 over={over}
                 barWidth={barWidth}
                 onIncrease={() => adjust(c.id, BUDGET_STEP)}
@@ -111,9 +116,7 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
         </Card>
 
         <Text style={styles.note}>
-          Cada toque mueve el límite {currency.symbol}
-          {formatNumber(BUDGET_STEP, currency)}. Solo se avisa cuando pasas del
-          100%.
+          {t('budget.note', { step: `${currency.symbol}${formatNumber(BUDGET_STEP, currency)}` })}
         </Text>
         </QueryState>
       </ScrollView>

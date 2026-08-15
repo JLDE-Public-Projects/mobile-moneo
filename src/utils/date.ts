@@ -1,57 +1,40 @@
-/** Abreviaturas de mes en español (índice 0 = enero). */
-const MONTHS_SHORT = [
-  'ene',
-  'feb',
-  'mar',
-  'abr',
-  'may',
-  'jun',
-  'jul',
-  'ago',
-  'sep',
-  'oct',
-  'nov',
-  'dic',
-];
-
-/** Nombres de mes en español (índice 0 = enero). */
-const MONTHS_LONG = [
-  'Enero',
-  'Febrero',
-  'Marzo',
-  'Abril',
-  'Mayo',
-  'Junio',
-  'Julio',
-  'Agosto',
-  'Septiembre',
-  'Octubre',
-  'Noviembre',
-  'Diciembre',
-];
+/**
+ * Nombres de mes en el idioma activo.
+ *
+ * Las funciones de este archivo son puras: no llaman a i18next directamente
+ * para que también funcionen fuera de un componente (por ejemplo, dentro de un
+ * hook de datos). Los nombres se piden aquí; el hook {@link useMonthNames} los
+ * obtiene del idioma activo.
+ */
+export interface MonthNames {
+  /** Nombres largos, índice 0 = enero (p. ej. "Enero"). */
+  long: readonly string[];
+  /** Abreviaturas, índice 0 = enero (p. ej. "ene"). */
+  short: readonly string[];
+}
 
 /**
  * Formatea una fecha (timestamp) como "día mes" abreviado, p. ej. "12 ago".
  */
-export function formatDayMonth(timestamp: number): string {
+export function formatDayMonth(timestamp: number, months: MonthNames): string {
   const date = new Date(timestamp);
-  return `${date.getDate()} ${MONTHS_SHORT[date.getMonth()]}`;
+  return `${date.getDate()} ${months.short[date.getMonth()]}`;
 }
 
 /** Formatea una fecha como "Mes año", p. ej. "Agosto 2026". */
-export function formatMonthYear(timestamp: number): string {
+export function formatMonthYear(timestamp: number, months: MonthNames): string {
   const date = new Date(timestamp);
-  return `${MONTHS_LONG[date.getMonth()]} ${date.getFullYear()}`;
+  return `${months.long[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 /** Abreviatura del mes de una fecha, p. ej. "ago". */
-export function monthShort(timestamp: number): string {
-  return MONTHS_SHORT[new Date(timestamp).getMonth()];
+export function monthShort(timestamp: number, months: MonthNames): string {
+  return months.short[new Date(timestamp).getMonth()];
 }
 
 /** Nombre del mes de una fecha en minúscula, p. ej. "agosto". */
-export function monthLong(timestamp: number): string {
-  return MONTHS_LONG[new Date(timestamp).getMonth()].toLowerCase();
+export function monthLong(timestamp: number, months: MonthNames): string {
+  return months.long[new Date(timestamp).getMonth()].toLowerCase();
 }
 
 /** Intervalo de fechas [from, to) en milisegundos. */

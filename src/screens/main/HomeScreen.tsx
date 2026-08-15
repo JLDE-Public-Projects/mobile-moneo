@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { IconButton } from '@/components/atoms/IconButton';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
@@ -13,10 +14,13 @@ import { useTransactions } from '@/services/transactions/transaction.queries';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { formatDayMonth } from '@/utils/date';
+import { useMonthNames } from '@/hooks/useMonthNames';
 import { colors, layout, spacing, typography } from '@/theme';
 
 /** Cantidad de movimientos recientes mostrados en el resumen. */
 const RECENT_COUNT = 5;
+/** Meses que muestra el histórico (coincide con {@link HistoryScreen}). */
+const HISTORY_MONTHS = 6;
 
 /** Callbacks de navegación que la pantalla delega en su contenedor. */
 interface HomeScreenProps {
@@ -43,8 +47,11 @@ export function HomeScreen({
   onOpenRecurrings,
   onOpenHistory,
 }: HomeScreenProps) {
+  const { t } = useTranslation();
+  const months = useMonthNames();
   const { data: transactions = [] } = useTransactions();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
+  const currentMonthName = months.long[new Date().getMonth()];
 
   // Totales del mes a partir de los movimientos.
   const { income, expense, balance } = useMemo(() => {
@@ -68,15 +75,15 @@ export function HomeScreen({
       >
         {/* Cabecera: mes + acceso a Ajustes */}
         <View style={styles.header}>
-          <Text style={styles.title}>Agosto</Text>
-          <IconButton accessibilityLabel="Ajustes" onPress={onOpenSettings}>
+          <Text style={styles.title}>{currentMonthName}</Text>
+          <IconButton accessibilityLabel={t('common.settings')} onPress={onOpenSettings}>
             <SettingsIcon />
           </IconButton>
         </View>
 
         {/* Balance del mes */}
         <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Balance del mes</Text>
+          <Text style={styles.balanceLabel}>{t('home.balanceOfMonth')}</Text>
           <View style={styles.balanceRow}>
             <Text style={styles.balanceSymbol}>
               {balance < 0 ? '−' : ''}
@@ -89,7 +96,7 @@ export function HomeScreen({
 
           <View style={styles.split}>
             <View style={styles.splitCol}>
-              <Text style={styles.splitLabel}>Ingresos</Text>
+              <Text style={styles.splitLabel}>{t('home.income')}</Text>
               <Text style={styles.splitValue}>
                 {currency.symbol}
                 {formatNumber(income, currency)}
@@ -97,7 +104,7 @@ export function HomeScreen({
             </View>
             <View style={styles.splitDivider} />
             <View style={[styles.splitCol, styles.splitColRight]}>
-              <Text style={styles.splitLabel}>Egresos</Text>
+              <Text style={styles.splitLabel}>{t('home.expenses')}</Text>
               <Text style={styles.splitValue}>
                 {currency.symbol}
                 {formatNumber(expense, currency)}
@@ -108,17 +115,17 @@ export function HomeScreen({
 
         {/* Últimos movimientos */}
         <SectionLabel style={styles.sectionSpacing}>
-          Últimos movimientos
+          {t('home.lastMovements')}
         </SectionLabel>
         <Card>
-          {recent.map((t) => (
+          {recent.map((tx) => (
             <TransactionRow
-              key={t.id}
-              category={t.category}
-              color={t.categoryColor}
-              subtitle={`${formatDayMonth(t.date)} · ${t.note || t.account}`}
-              amount={`${t.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(t.amount), currency)}`}
-              income={t.amount > 0}
+              key={tx.id}
+              category={tx.category}
+              color={tx.categoryColor}
+              subtitle={`${formatDayMonth(tx.date, months)} · ${tx.note || tx.account}`}
+              amount={`${tx.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(tx.amount), currency)}`}
+              income={tx.amount > 0}
               showSeparator
             />
           ))}
@@ -127,14 +134,18 @@ export function HomeScreen({
             accessibilityRole="button"
             style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
           >
-            <Text style={styles.seeAllText}>Ver todos</Text>
+            <Text style={styles.seeAllText}>{t('home.viewAll')}</Text>
           </Pressable>
         </Card>
 
         {/* Accesos */}
         <Card style={styles.linksCard}>
-          <ListRow label="Recurrentes" onPress={onOpenRecurrings} showSeparator/>
-          <ListRow label="Historial" detail="6 meses" onPress={onOpenHistory} />
+          <ListRow label={t('home.recurrings')} onPress={onOpenRecurrings} showSeparator/>
+          <ListRow
+            label={t('home.history')}
+            detail={t('home.historyDetail', { count: HISTORY_MONTHS })}
+            onPress={onOpenHistory}
+          />
         </Card>
       </ScrollView>
     </Screen>

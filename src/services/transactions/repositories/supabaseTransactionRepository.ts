@@ -1,3 +1,4 @@
+import i18n from '@/i18n';
 import { TransactionRepository } from '@/services/transactions/transaction.repository';
 import { Transaction } from '@/services/transactions/transaction.types';
 import { supabase } from '@/services/supabase/client';
@@ -61,7 +62,7 @@ export const supabaseTransactionRepository: TransactionRepository = {
          .order('created_at', { ascending: false });
 
       if (error) {
-         throw new Error('No pudimos cargar tus movimientos.');
+         throw new Error(i18n.t('movements.repository.loadFailed'));
       }
       return (data as TransactionRow[]).map(toTransaction);
    },
@@ -85,7 +86,7 @@ export const supabaseTransactionRepository: TransactionRepository = {
          .single();
 
       if (error || !data) {
-         throw new Error('No pudimos registrar el movimiento.');
+         throw new Error(i18n.t('movements.repository.addFailed'));
       }
       return toTransaction(data as TransactionRow);
    },
@@ -110,7 +111,7 @@ export const supabaseTransactionRepository: TransactionRepository = {
          .single();
 
       if (error || !data) {
-         throw new Error('No pudimos guardar los cambios.');
+         throw new Error(i18n.t('movements.repository.updateFailed'));
       }
       return toTransaction(data as TransactionRow);
    },
@@ -118,7 +119,7 @@ export const supabaseTransactionRepository: TransactionRepository = {
    async remove(id) {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) {
-         throw new Error('No pudimos eliminar el movimiento.');
+         throw new Error(i18n.t('movements.repository.removeFailed'));
       }
    },
 };

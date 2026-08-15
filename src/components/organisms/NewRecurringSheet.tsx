@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { Button } from '@/components/atoms/Button';
 import { FormMessage } from '@/components/atoms/FormMessage';
@@ -11,12 +12,6 @@ import { CategoryType } from '@/services/categories/category.types';
 import { useAccounts } from '@/services/accounts/account.queries';
 import { NewRecurring } from '@/services/recurrings/recurring.types';
 import { colors, radius, spacing, typography } from '@/theme';
-
-/** Un recurrente puede ser un gasto fijo o un ingreso, como el salario. */
-const RECURRING_TYPE_OPTIONS: SegmentOption<CategoryType>[] = [
-  { value: 'expense', label: 'Egreso' },
-  { value: 'income', label: 'Ingreso' },
-];
 
 interface NewRecurringSheetProps {
   /** Si la hoja está visible. */
@@ -37,6 +32,11 @@ const onlyDigits = (value: string) => value.replace(/[^0-9]/g, '');
  * defecto de la primera cuenta. Delega la creación en `onCreate`.
  */
 export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSheetProps) {
+  const { t } = useTranslation();
+  const RECURRING_TYPE_OPTIONS: SegmentOption<CategoryType>[] = [
+    { value: 'expense', label: t('common.expense') },
+    { value: 'income', label: t('common.income') },
+  ];
   const { data: categories = [] } = useCategories();
   const { data: accounts = [] } = useAccounts();
 
@@ -81,7 +81,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
   const handleSave = async () => {
     if (isSubmitting) return;
     if (!canSave || !selectedCategory || !selectedAccount) {
-      setErrorMessage('Completa nombre, monto y día.');
+      setErrorMessage(t('recurrings.newSheet.errorIncomplete'));
       return;
     }
     setIsSubmitting(true);
@@ -102,7 +102,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos crear el recurrente.';
+          : t('recurrings.newSheet.errorGeneric');
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -122,7 +122,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text style={styles.title}>Nuevo recurrente</Text>
+      <Text style={styles.title}>{t('recurrings.newSheet.title')}</Text>
 
       {/* Egreso o ingreso: un salario también se repite cada mes. */}
       <View style={styles.segment}>
@@ -143,7 +143,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
           />
           <TextInput
             style={styles.input}
-            placeholder="Nombre (Netflix, Internet, Andrés…)"
+            placeholder={t('recurrings.newSheet.namePlaceholder')}
             placeholderTextColor={colors.textTertiary}
             value={name}
             onChangeText={setName}
@@ -151,11 +151,11 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Monto</Text>
+          <Text style={styles.label}>{t('recurrings.newSheet.amount')}</Text>
           <Text style={styles.currencySign}>$</Text>
           <TextInput
             style={[styles.input, styles.amountInput]}
-            placeholder="0"
+            placeholder={t('accounts.sheet.amountPlaceholder')}
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
             value={amount}
@@ -164,10 +164,10 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
         </View>
 
         <View style={styles.row}>
-          <Text style={styles.label}>Cada día</Text>
+          <Text style={styles.label}>{t('recurrings.newSheet.everyDayLabel')}</Text>
           <TextInput
             style={styles.input}
-            placeholder="1"
+            placeholder={t('recurrings.newSheet.dayPlaceholder')}
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
             value={day}
@@ -179,8 +179,8 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
           onPress={() => setPickerOpen(true)}
           style={({ pressed }) => [styles.row, pressed && styles.pressed]}
         >
-          <Text style={styles.label}>Categoría</Text>
-          <Text style={styles.value}>{selectedCategory?.name ?? '—'}</Text>
+          <Text style={styles.label}>{t('common.category')}</Text>
+          <Text style={styles.value}>{selectedCategory?.name ?? t('common.placeholderDash')}</Text>
           <ChevronIcon />
         </Pressable>
 
@@ -188,8 +188,8 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
           onPress={() => setAccountPickerOpen(true)}
           style={({ pressed }) => [styles.row, styles.rowLast, pressed && styles.pressed]}
         >
-          <Text style={styles.label}>Cuenta</Text>
-          <Text style={styles.value}>{selectedAccount?.name ?? '—'}</Text>
+          <Text style={styles.label}>{t('common.account')}</Text>
+          <Text style={styles.value}>{selectedAccount?.name ?? t('common.placeholderDash')}</Text>
           <ChevronIcon />
         </Pressable>
       </View>
@@ -197,7 +197,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
       <FormMessage message={errorMessage} />
 
       <Button
-        label="Guardar recurrente"
+        label={t('recurrings.newSheet.submit')}
         onPress={handleSave}
         disabled={!canSave}
         loading={isSubmitting}
@@ -206,7 +206,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
       <SelectionSheet
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        title="Categoría"
+        title={t('common.category')}
         options={categoryOptions}
         selected={selectedCategory?.name ?? ''}
         onSelect={setCategoryName}
@@ -215,7 +215,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
       <SelectionSheet
         visible={accountPickerOpen}
         onClose={() => setAccountPickerOpen(false)}
-        title="Cuenta"
+        title={t('common.account')}
         options={accountOptions}
         selected={selectedAccount?.name ?? ''}
         onSelect={setAccountName}

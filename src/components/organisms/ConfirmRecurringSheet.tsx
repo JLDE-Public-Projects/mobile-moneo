@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { Button } from '@/components/atoms/Button';
 import { FormMessage } from '@/components/atoms/FormMessage';
@@ -36,6 +37,7 @@ export function ConfirmRecurringSheet({
   onClose,
   onConfirm,
 }: ConfirmRecurringSheetProps) {
+  const { t } = useTranslation();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
   const [amount, setAmount] = useState('');
@@ -67,7 +69,7 @@ export function ConfirmRecurringSheet({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos registrar el movimiento.';
+          : t('recurrings.confirmSheet.errorGeneric');
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -76,14 +78,20 @@ export function ConfirmRecurringSheet({
 
   return (
     <BottomSheet visible={Boolean(recurring)} onClose={onClose}>
-      <Text style={styles.title}>Registrar {recurring?.name ?? ''}</Text>
+      <Text style={styles.title}>
+        {t('recurrings.confirmSheet.title', { name: recurring?.name ?? '' })}
+      </Text>
       <Text style={styles.subtitle}>
-        {isIncome ? 'Se registrará como ingreso' : 'Se registrará como egreso'}
-        {recurring ? ` en ${recurring.account}` : ''}.
+        {isIncome
+          ? t('recurrings.confirmSheet.subtitleIncome')
+          : t('recurrings.confirmSheet.subtitleExpense')}
+        {recurring
+          ? t('recurrings.confirmSheet.subtitleAccountSuffix', { account: recurring.account })
+          : ''}
       </Text>
 
       <View style={styles.card}>
-        <Text style={styles.label}>Importe</Text>
+        <Text style={styles.label}>{t('recurrings.confirmSheet.amount')}</Text>
         <View style={styles.amountRow}>
           <Text style={styles.currencySign}>{currency.symbol}</Text>
           <TextInput
@@ -99,14 +107,14 @@ export function ConfirmRecurringSheet({
 
       {hasChanged && (
         <Text style={styles.note}>
-          Este importe quedará guardado para las próximas veces.
+          {t('recurrings.confirmSheet.changedNote')}
         </Text>
       )}
 
       <FormMessage message={errorMessage} />
 
       <Button
-        label="Registrar"
+        label={t('recurrings.confirmSheet.submit')}
         onPress={handleConfirm}
         disabled={!canSubmit}
         loading={isSubmitting}

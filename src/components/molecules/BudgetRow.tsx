@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography } from '@/theme';
 
 interface BudgetRowProps {
@@ -33,6 +34,7 @@ export function BudgetRow({
   onDecrease,
   showSeparator = false,
 }: BudgetRowProps) {
+  const { t } = useTranslation();
   const barColor = over ? colors.negative : colors.accent;
 
   return (
@@ -48,7 +50,7 @@ export function BudgetRow({
         <Pressable
           onPress={onDecrease}
           accessibilityRole="button"
-          accessibilityLabel={`Reducir presupuesto de ${name}`}
+          accessibilityLabel={t('accessibility.decreaseBudget', { name })}
           style={({ pressed }) => [styles.stepper, pressed && styles.pressed]}
         >
           <Text style={styles.stepperSign}>−</Text>
@@ -56,7 +58,7 @@ export function BudgetRow({
         <Pressable
           onPress={onIncrease}
           accessibilityRole="button"
-          accessibilityLabel={`Aumentar presupuesto de ${name}`}
+          accessibilityLabel={t('accessibility.increaseBudget', { name })}
           style={({ pressed }) => [styles.stepper, pressed && styles.pressed]}
         >
           <Text style={styles.stepperSign}>+</Text>

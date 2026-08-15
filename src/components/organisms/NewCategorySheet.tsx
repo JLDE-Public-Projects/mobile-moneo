@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { Button } from '@/components/atoms/Button';
 import { FormMessage } from '@/components/atoms/FormMessage';
@@ -22,12 +23,6 @@ interface NewCategorySheetProps {
   onCreate: (input: NewCategory) => Promise<void>;
 }
 
-/** Opciones del control segmentado de tipo. */
-const TYPE_OPTIONS: SegmentOption<CategoryType>[] = [
-  { value: 'expense', label: 'Egreso' },
-  { value: 'income', label: 'Ingreso' },
-];
-
 /**
  * Hoja inferior para crear una categoría (organismo).
  *
@@ -41,6 +36,11 @@ export function NewCategorySheet({
   onClose,
   onCreate,
 }: NewCategorySheetProps) {
+  const { t } = useTranslation();
+  const TYPE_OPTIONS: SegmentOption<CategoryType>[] = [
+    { value: 'expense', label: t('common.expense') },
+    { value: 'income', label: t('common.income') },
+  ];
   const [type, setType] = useState<CategoryType>(initialType);
   const [name, setName] = useState('');
   const [color, setColor] = useState<string>(DEFAULT_CATEGORY_COLOR);
@@ -62,7 +62,7 @@ export function NewCategorySheet({
   const handleAdd = async () => {
     if (isSubmitting) return;
     if (!canSubmit) {
-      setErrorMessage('Escribe un nombre para la categoría.');
+      setErrorMessage(t('categories.sheet.errorEmptyName'));
       return;
     }
     setIsSubmitting(true);
@@ -74,7 +74,7 @@ export function NewCategorySheet({
       const message =
         error instanceof Error && error.message
           ? error.message
-          : 'No pudimos crear la categoría. Inténtalo de nuevo.';
+          : t('categories.sheet.errorGeneric');
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -83,7 +83,7 @@ export function NewCategorySheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      <Text style={styles.title}>Nueva categoría</Text>
+      <Text style={styles.title}>{t('categories.sheet.title')}</Text>
 
       <View style={styles.card}>
         {/* Tipo */}
@@ -96,7 +96,7 @@ export function NewCategorySheet({
           <View style={[styles.swatch, { backgroundColor: color }]} />
           <TextInput
             style={styles.input}
-            placeholder="Nombre de la categoría"
+            placeholder={t('categories.sheet.namePlaceholder')}
             placeholderTextColor={colors.textTertiary}
             value={name}
             onChangeText={setName}
@@ -107,7 +107,7 @@ export function NewCategorySheet({
 
         {/* Color */}
         <View style={styles.colorSection}>
-          <Text style={styles.colorLabel}>Color</Text>
+          <Text style={styles.colorLabel}>{t('categories.sheet.colorLabel')}</Text>
           <View style={styles.swatches}>
             {CATEGORY_PALETTE.map((paletteColor) => {
               const selected = paletteColor === color;
@@ -115,7 +115,7 @@ export function NewCategorySheet({
                 <Pressable
                   key={paletteColor}
                   accessibilityRole="button"
-                  accessibilityLabel={`Color ${paletteColor}`}
+                  accessibilityLabel={t('common.color', { name: paletteColor })}
                   accessibilityState={{ selected }}
                   onPress={() => setColor(paletteColor)}
                   style={[styles.ring, selected && styles.ringActive]}
@@ -133,7 +133,7 @@ export function NewCategorySheet({
       <FormMessage message={errorMessage} />
 
       <Button
-        label="Agregar categoría"
+        label={t('categories.sheet.submit')}
         onPress={handleAdd}
         disabled={!canSubmit}
         loading={isSubmitting}

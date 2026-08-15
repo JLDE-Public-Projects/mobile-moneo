@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, typography } from '@/theme';
 
 interface BackLinkProps {
@@ -18,12 +19,13 @@ interface BackLinkProps {
  * ligera de la app.
  */
 export function BackLink({ label, onPress }: BackLinkProps) {
+  const { t } = useTranslation();
   return (
     <Pressable
       onPress={onPress}
       hitSlop={10}
       accessibilityRole="button"
-      accessibilityLabel={`Volver a ${label}`}
+      accessibilityLabel={t('accessibility.backTo', { label })}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <View style={styles.chevron} />

@@ -8,6 +8,7 @@ import {
    View,
 } from 'react-native';
 import {StatusBar} from 'expo-status-bar';
+import {useTranslation} from 'react-i18next';
 import {Screen} from '@/components/layout/Screen';
 import {BackLink} from '@/components/atoms/BackLink';
 import {BrandMark} from '@/components/atoms/BrandMark';
@@ -18,7 +19,7 @@ import {SectionLabel} from '@/components/atoms/SectionLabel';
 import {Card} from '@/components/molecules/Card';
 import {InputRow} from '@/components/molecules/InputRow';
 import {useRegisterForm, RegisterData} from '@/hooks/useRegisterForm';
-import {PASSWORD_PLACEHOLDER} from '@/utils/validation';
+import {passwordPlaceholder} from '@/utils/validation';
 import {colors, layout, spacing, typography} from '@/theme';
 
 /** Callbacks de navegación/acción que la pantalla delega en su contenedor. */
@@ -42,6 +43,7 @@ const STAGGER = 70;
  * {@link FadeInUp} para dar sensación de fluidez al abrir la vista.
  */
 export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps) {
+   const {t} = useTranslation();
 
    const form = useRegisterForm({onSubmit: onRegister});
 
@@ -51,15 +53,15 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {/* Enlace de retroceso */}
             <FadeInUp delay={0}>
-               <BackLink label="Entrar" onPress={onBackToLogin}/>
+               <BackLink label={t('auth.login.submit')} onPress={onBackToLogin}/>
             </FadeInUp>
 
             {/* Cabecera de marca */}
             <FadeInUp delay={STAGGER} style={styles.header}>
                <BrandMark size={56}/>
-               <Text style={styles.title}>Crear tu cuenta</Text>
+               <Text style={styles.title}>{t('auth.register.title')}</Text>
                <Text style={styles.subtitle}>
-                  Tres datos y el código que te compartieron.
+                  {t('auth.register.subtitle')}
                </Text>
             </FadeInUp>
 
@@ -67,8 +69,8 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
             <FadeInUp delay={STAGGER * 2} style={styles.personalCard}>
                <Card>
                   <InputRow
-                     label="Usuario"
-                     placeholder="Elige tu usuario"
+                     label={t('auth.register.username')}
+                     placeholder={t('auth.register.usernamePlaceholder')}
                      autoCapitalize="none"
                      autoCorrect={false}
                      textContentType="username"
@@ -78,8 +80,8 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
                      showSeparator
                   />
                   <InputRow
-                     label="Nombre"
-                     placeholder="Cómo te llamas"
+                     label={t('auth.register.name')}
+                     placeholder={t('auth.register.namePlaceholder')}
                      autoCapitalize="words"
                      textContentType="name"
                      value={form.name}
@@ -87,8 +89,8 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
                      showSeparator
                   />
                   <InputRow
-                     label="Clave"
-                     placeholder={PASSWORD_PLACEHOLDER}
+                     label={t('auth.register.password')}
+                     placeholder={passwordPlaceholder(t)}
                      secureTextEntry
                      textContentType="newPassword"
                      value={form.password}
@@ -99,11 +101,11 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
 
             {/* Código de invitación */}
             <FadeInUp delay={STAGGER * 3} style={styles.inviteSection}>
-               <SectionLabel>Invitación</SectionLabel>
+               <SectionLabel>{t('auth.register.inviteSection')}</SectionLabel>
                <Card>
                   <InputRow
-                     label="Código"
-                     placeholder="MONEO-000000"
+                     label={t('auth.register.inviteCode')}
+                     placeholder={t('auth.register.inviteCodePlaceholder')}
                      autoCapitalize="characters"
                      autoCorrect={false}
                      value={form.inviteCode}
@@ -121,7 +123,7 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
             {/* Acción principal */}
             <FadeInUp delay={STAGGER * 4}>
                <Button
-                  label="Crear cuenta"
+                  label={t('auth.register.submit')}
                   onPress={form.submit}
                   disabled={!form.canSubmit}
                   loading={form.isSubmitting}
@@ -131,8 +133,7 @@ export function RegisterScreen({onRegister, onBackToLogin}: RegisterScreenProps)
             <View style={styles.flex}/>
 
             <Text style={styles.legal}>
-               Moneo es por invitación. Tus datos se sincronizan{'\n'}
-               cifrados en el servidor privado de Moneo.
+               {t('auth.legalRegister')}
             </Text>
          </ScrollView>
       </KeyboardAvoidingView>

@@ -1,4 +1,5 @@
 import type { AuthError, User } from '@supabase/supabase-js';
+import i18n from '@/i18n';
 import { AuthRepository } from '@/services/auth/auth.repository';
 import { AuthSession, AuthUser } from '@/services/auth/auth.types';
 import { supabase } from '@/services/supabase/client';
@@ -10,28 +11,33 @@ import { MIN_PASSWORD_LENGTH } from '@/utils/validation';
  *
  * Un mensaje genérico deja al usuario sin saber qué corregir, así que los casos
  * conocidos se identifican por su código (estable) y no por el texto en inglés.
+ *
+ * Este repositorio no es un componente, así que no puede usar el hook
+ * `useTranslation`: llama a la instancia de i18next directamente, que ya
+ * resuelve el idioma activo.
  */
 function describeSignUpError(error: AuthError): string {
+  const { t } = i18n;
   switch (error.code) {
     case 'user_already_exists':
     case 'email_exists':
-      return 'Ese usuario ya está registrado.';
+      return t('auth.repository.userAlreadyRegistered');
     case 'weak_password':
-      return `La clave necesita mínimo ${MIN_PASSWORD_LENGTH} caracteres.`;
+      return t('auth.repository.weakPassword', { min: MIN_PASSWORD_LENGTH });
     case 'email_address_invalid':
-      return 'Ese nombre de usuario no es válido. Prueba con otro.';
+      return t('auth.repository.invalidUsername');
     case 'signup_disabled':
     case 'email_provider_disabled':
-      return 'El registro está deshabilitado en este momento.';
+      return t('auth.repository.signupDisabled');
     case 'over_request_rate_limit':
     case 'over_email_send_rate_limit':
-      return 'Demasiados intentos. Espera un momento y vuelve a intentarlo.';
+      return t('auth.repository.rateLimited');
     default:
       // El trigger del servidor rechaza códigos de invitación inexistentes.
       if (error.message.includes('invitación')) {
-        return 'El código de invitación no es válido.';
+        return t('auth.repository.inviteInvalid');
       }
-      return 'No pudimos crear tu cuenta. Inténtalo de nuevo.';
+      return t('auth.repository.signupGeneric');
   }
 }
 
@@ -68,10 +74,10 @@ export const supabaseAuthRepository: AuthRepository = {
       { code: inviteCode },
     );
     if (rpcError) {
-      throw new Error('No pudimos validar el código de invitación.');
+      throw new Error(i18n.t('auth.repository.inviteCheckFailed'));
     }
     if (!isValid) {
-      throw new Error('El código de invitación no es válido.');
+      throw new Error(i18n.t('auth.repository.inviteInvalid'));
     }
 
     // 2) Alta en Supabase Auth. El trigger del servidor crea el perfil con los
@@ -89,9 +95,7 @@ export const supabaseAuthRepository: AuthRepository = {
     // Sin sesión = "Confirm email" está activo en Supabase (incompatible con el
     // email sintético). Lo señalamos para poder corregir la configuración.
     if (!data.session || !data.user) {
-      throw new Error(
-        'La cuenta se creó pero no inició sesión. Desactiva "Confirm email" en Supabase.',
-      );
+      throw new Error(i18n.t('auth.repository.signupNoSession'));
     }
 
     return { token: data.session.access_token, user: mapUser(data.user) };
@@ -106,7 +110,7 @@ export const supabaseAuthRepository: AuthRepository = {
     if (error || !data.session) {
       // No distinguimos "usuario no existe" de "clave incorrecta" para no filtrar
       // qué usuarios están registrados.
-      throw new Error('Usuario o clave incorrectos.');
+      throw new Error(i18n.t('auth.repository.loginInvalid'));
     }
 
     return { token: data.session.access_token, user: mapUser(data.user) };
@@ -128,7 +132,7 @@ export const supabaseAuthRepository: AuthRepository = {
         password: currentPassword ?? '',
       });
       if (reauthError) {
-        throw new Error('La clave actual no es correcta.');
+        throw new Error(i18n.t('auth.repository.wrongCurrentPassword'));
       }
     }
 
@@ -142,7 +146,7 @@ export const supabaseAuthRepository: AuthRepository = {
 
     const { data, error } = await supabase.auth.updateUser(attributes);
     if (error || !data.user) {
-      throw new Error('No pudimos actualizar tu perfil.');
+      throw new Error(i18n.t('auth.repository.profileUpdateFailed'));
     }
 
     // Mantenemos la tabla `profiles` sincronizada con el nombre visible.
@@ -159,7 +163,7 @@ export const supabaseAuthRepository: AuthRepository = {
       .select('invite_code')
       .single();
     if (error || !data) {
-      throw new Error('No pudimos obtener tu código de invitación.');
+      throw new Error(i18n.t('auth.repository.inviteCodeFetchFailed'));
     }
     return data.invite_code as string;
   },

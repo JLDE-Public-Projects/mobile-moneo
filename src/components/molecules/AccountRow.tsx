@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface AccountRowProps {
@@ -33,6 +34,7 @@ export function AccountRow({
   onPress,
   showSeparator = false,
 }: AccountRowProps) {
+  const { t } = useTranslation();
   const content = (
     <>
       <View style={[styles.swatch, { backgroundColor: color }]} />
@@ -64,7 +66,7 @@ export function AccountRow({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Editar ${name}`}
+      accessibilityLabel={t('accessibility.editAccount', { name })}
       style={({ pressed }) => [
         styles.row,
         showSeparator && styles.separator,

@@ -19,6 +19,7 @@ import {
   monthRange,
   monthShort,
 } from '@/utils/date';
+import { useMonthNames } from '@/hooks/useMonthNames';
 
 /** Clave de caché de los movimientos de un mes. */
 function transactionsKey(from: number) {
@@ -58,11 +59,14 @@ export function useTransactions(): UseQueryResult<Transaction[], Error> {
 export function useMonthlyHistory(
   count: number,
 ): UseQueryResult<MonthSummary[], Error> {
+  const months = useMonthNames();
   const range = useMemo(() => lastMonthsRange(count), [count]);
   const starts = useMemo(() => lastMonthStarts(count), [count]);
 
   return useQuery({
-    queryKey: ['transactions', 'history', range.from, count],
+    // El idioma entra en la clave: si cambia, los nombres de mes en caché
+    // (`name`/`short`) quedarían en el idioma anterior sin este recálculo.
+    queryKey: ['transactions', 'history', range.from, count, months.long[0]],
     queryFn: async () => {
       const transactions = await getRepositories().transactions.list(range);
 
@@ -73,8 +77,8 @@ export function useMonthlyHistory(
           start,
           {
             start,
-            name: formatMonthYear(start),
-            short: monthShort(start),
+            name: formatMonthYear(start, months),
+            short: monthShort(start, months),
             income: 0,
             expense: 0,
           },
@@ -91,10 +95,10 @@ export function useMonthlyHistory(
         }
       }
 
-      const months = [...byMonth.values()];
-      const firstWithData = months.findIndex((m) => m.income > 0 || m.expense > 0);
+      const summaries = [...byMonth.values()];
+      const firstWithData = summaries.findIndex((m) => m.income > 0 || m.expense > 0);
       // Sin ningún movimiento se deja solo el mes en curso.
-      return firstWithData === -1 ? months.slice(-1) : months.slice(firstWithData);
+      return firstWithData === -1 ? summaries.slice(-1) : summaries.slice(firstWithData);
     },
   });
 }

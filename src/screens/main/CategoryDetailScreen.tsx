@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { BackLink } from '@/components/atoms/BackLink';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
@@ -11,6 +12,7 @@ import { useTransactions } from '@/services/transactions/transaction.queries';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { formatDayMonth } from '@/utils/date';
+import { useMonthNames } from '@/hooks/useMonthNames';
 import { colors, layout, spacing, typography } from '@/theme';
 
 /** Callbacks/entrada de la pantalla. */
@@ -33,6 +35,8 @@ export function CategoryDetailScreen({
   categoryName,
   onBack,
 }: CategoryDetailScreenProps) {
+  const { t } = useTranslation();
+  const months = useMonthNames();
   const { data: categories = [] } = useCategories();
   const { data: transactions = [] } = useTransactions();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
@@ -53,10 +57,10 @@ export function CategoryDetailScreen({
   const barWidth = budget > 0 ? (spent / budget) * 100 : 0;
 
   const note = !budget
-    ? 'Sin límite definido'
+    ? t('categoryDetail.noLimit')
     : over
-      ? `Te pasaste ${currency.symbol}${formatNumber(spent - budget, currency)}`
-      : `Te quedan ${currency.symbol}${formatNumber(budget - spent, currency)} este mes`;
+      ? t('categoryDetail.over', { amount: `${currency.symbol}${formatNumber(spent - budget, currency)}` })
+      : t('categoryDetail.remainingThisMonth', { amount: `${currency.symbol}${formatNumber(budget - spent, currency)}` });
 
   return (
     <Screen>
@@ -66,7 +70,7 @@ export function CategoryDetailScreen({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.backRow}>
-          <BackLink label="Gastos" onPress={onBack} />
+          <BackLink label={t('categoryDetail.back')} onPress={onBack} />
         </View>
         <Text style={styles.title}>{categoryName}</Text>
 
@@ -78,8 +82,7 @@ export function CategoryDetailScreen({
               {formatNumber(spent, currency)}
             </Text>
             <Text style={styles.budget}>
-              de {currency.symbol}
-              {formatNumber(budget, currency)}
+              {t('categoryDetail.ofBudget', { amount: `${currency.symbol}${formatNumber(budget, currency)}` })}
             </Text>
           </View>
           <View style={styles.track}>
@@ -98,16 +101,16 @@ export function CategoryDetailScreen({
 
         {/* Movimientos de la categoría */}
         <SectionLabel style={styles.sectionSpacing}>
-          {`${rows.length} movimientos`}
+          {t('categoryDetail.movementsCount', { count: rows.length })}
         </SectionLabel>
         <Card>
-          {rows.map((t, index) => (
+          {rows.map((tx, index) => (
             <TransactionRow
-              key={t.id}
-              category={t.note}
-              subtitle={`${formatDayMonth(t.date)} · ${t.account}`}
-              amount={`${t.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(t.amount), currency)}`}
-              income={t.amount > 0}
+              key={tx.id}
+              category={tx.note}
+              subtitle={`${formatDayMonth(tx.date, months)} · ${tx.account}`}
+              amount={`${tx.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(tx.amount), currency)}`}
+              income={tx.amount > 0}
               showSeparator={index < rows.length - 1}
             />
           ))}

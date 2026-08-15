@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface CategoryRowProps {
@@ -30,6 +31,7 @@ export function CategoryRow({
   onRemove,
   showSeparator = false,
 }: CategoryRowProps) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.row, showSeparator && styles.separator]}>
       <View style={[styles.swatch, { backgroundColor: color }]} />
@@ -44,13 +46,13 @@ export function CategoryRow({
           onPress={onRemove}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel={`Borrar ${name}`}
+          accessibilityLabel={t('accessibility.removeCategory', { name })}
           style={({ pressed }) => (pressed ? styles.pressed : undefined)}
         >
-          <Text style={styles.remove}>Borrar</Text>
+          <Text style={styles.remove}>{t('categories.delete')}</Text>
         </Pressable>
       ) : (
-        <Text style={styles.inUse}>En uso</Text>
+        <Text style={styles.inUse}>{t('categories.inUse')}</Text>
       )}
     </View>
   );

@@ -1,4 +1,5 @@
 import {useCallback, useMemo, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {
    isValidInviteCode,
    isValidName,
@@ -53,6 +54,7 @@ interface UseRegisterFormResult {
  * efectos, aislados y fáciles de testear.
  */
 export function useRegisterForm({onSubmit}: UseRegisterFormOptions): UseRegisterFormResult {
+   const {t} = useTranslation();
 
    const [username, setUsernameValue] = useState('');
    const [name, setNameValue] = useState('');
@@ -122,7 +124,7 @@ export function useRegisterForm({onSubmit}: UseRegisterFormOptions): UseRegister
          !isValidPassword(password) ||
          !isValidInviteCode(inviteCode)
       ) {
-         setErrorMessage('Revisa los datos y el código de invitación.');
+         setErrorMessage(t('auth.register.errorInvalid'));
          return;
       }
 
@@ -140,12 +142,12 @@ export function useRegisterForm({onSubmit}: UseRegisterFormOptions): UseRegister
          const message =
             error instanceof Error && error.message
                ? error.message
-               : 'No pudimos crear tu cuenta. Inténtalo de nuevo.';
+               : t('auth.register.errorGeneric');
          setErrorMessage(message);
       } finally {
          setIsSubmitting(false);
       }
-   }, [inviteCode, isSubmitting, name, onSubmit, password, username]);
+   }, [inviteCode, isSubmitting, name, onSubmit, password, t, username]);
 
    return {
       username,
