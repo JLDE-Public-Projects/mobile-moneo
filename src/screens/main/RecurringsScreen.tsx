@@ -8,6 +8,7 @@ import { BackLink } from '@/components/atoms/BackLink';
 import { SectionLabel } from '@/components/atoms/SectionLabel';
 import { Card } from '@/components/molecules/Card';
 import { AddRow } from '@/components/molecules/AddRow';
+import { RecurringRow } from '@/components/molecules/RecurringRow';
 import { NewRecurringSheet } from '@/components/organisms/NewRecurringSheet';
 import { ConfirmRecurringSheet } from '@/components/organisms/ConfirmRecurringSheet';
 import {
@@ -152,14 +153,24 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
         <View style={styles.totalsCard}>
           <View style={styles.totalCol}>
             <Text style={styles.totalLabel}>{t('recurrings.perMonth')}</Text>
-            <Text style={[styles.totalValue, monthly < 0 && styles.totalNegative]}>
+            <Text
+              style={[styles.totalValue, monthly < 0 && styles.totalNegative]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {formatMoney(monthly, currency)}
             </Text>
           </View>
           <View style={styles.totalsDivider} />
           <View style={[styles.totalCol, styles.totalColRight]}>
             <Text style={styles.totalLabel}>{t('recurrings.perYear')}</Text>
-            <Text style={[styles.totalValue, monthly < 0 && styles.totalNegative]}>
+            <Text
+              style={[styles.totalValue, monthly < 0 && styles.totalNegative]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+            >
               {formatMoney(monthly * 12, currency)}
             </Text>
           </View>
@@ -173,35 +184,29 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
           {pending.map((r) => {
             const overdue = r.day < today;
             return (
-              <View key={r.id} style={[styles.row, styles.rowBorder]}>
-                <View style={[styles.swatch, { backgroundColor: r.categoryColor }]} />
-                <View style={styles.info}>
-                  <Text style={styles.name} numberOfLines={1}>
-                    {r.name}
-                  </Text>
-                  <View style={styles.subRow}>
-                    <Text style={[styles.sub, overdue && styles.subOverdue]}>
-                      {overdue ? t('recurrings.overdue') : t('recurrings.due')}
-                      {t('recurrings.dueOnDay', { day: r.day })}
-                    </Text>
-                    <Pressable
-                      onPress={() => setActive.mutate({ id: r.id, active: false })}
-                      hitSlop={6}
-                    >
-                      <Text style={styles.link}>{t('recurrings.pause')}</Text>
-                    </Pressable>
-                  </View>
-                </View>
-                <Text style={[styles.amount, r.amount > 0 && styles.amountIncome]}>
-                  {money(Math.abs(r.amount))}
-                </Text>
-                <Pressable
-                  onPress={() => startRegister(r)}
-                  style={({ pressed }) => [styles.action, pressed && styles.pressed]}
-                >
-                  <Text style={styles.actionText}>{t('recurrings.register')}</Text>
-                </Pressable>
-              </View>
+              <RecurringRow
+                key={r.id}
+                color={r.categoryColor}
+                name={r.name}
+                amount={money(Math.abs(r.amount))}
+                amountVariant={r.amount > 0 ? 'income' : 'default'}
+                subtitle={
+                  (overdue ? t('recurrings.overdue') : t('recurrings.due')) +
+                  t('recurrings.dueOnDay', { day: r.day })
+                }
+                subtitleOverdue={overdue}
+                pauseLabel={t('recurrings.pause')}
+                onPause={() => setActive.mutate({ id: r.id, active: false })}
+                showSeparator
+                trailing={
+                  <Pressable
+                    onPress={() => startRegister(r)}
+                    style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+                  >
+                    <Text style={styles.actionText}>{t('recurrings.register')}</Text>
+                  </Pressable>
+                }
+              />
             );
           })}
           <AddRow label={t('recurrings.newRecurring')} onPress={() => setSheetVisible(true)} />
@@ -215,22 +220,16 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
             </SectionLabel>
             <Card>
               {done.map((r, index) => (
-                <View
+                <RecurringRow
                   key={r.id}
-                  style={[styles.row, index < done.length - 1 && styles.rowBorder]}
-                >
-                  <View
-                    style={[styles.swatch, { backgroundColor: r.categoryColor }]}
-                  />
-                  <View style={styles.info}>
-                    <Text style={styles.name} numberOfLines={1}>
-                      {r.name}
-                    </Text>
-                    <Text style={styles.sub}>{t('recurrings.paidOnDay', { day: r.day })}</Text>
-                  </View>
-                  <Text style={styles.amountMuted}>{money(Math.abs(r.amount))}</Text>
-                  <Text style={styles.check}>✓</Text>
-                </View>
+                  color={r.categoryColor}
+                  name={r.name}
+                  amount={money(Math.abs(r.amount))}
+                  amountVariant="muted"
+                  subtitle={t('recurrings.paidOnDay', { day: r.day })}
+                  showSeparator={index < done.length - 1}
+                  trailing={<Text style={styles.check}>✓</Text>}
+                />
               ))}
             </Card>
           </>
@@ -242,25 +241,24 @@ export function RecurringsScreen({ onBack }: RecurringsScreenProps) {
             <SectionLabel style={styles.sectionSpacing}>{t('recurrings.paused')}</SectionLabel>
             <Card>
               {paused.map((r, index) => (
-                <View
+                <RecurringRow
                   key={r.id}
-                  style={[styles.row, index < paused.length - 1 && styles.rowBorder]}
-                >
-                  <View style={[styles.swatch, styles.swatchMuted]} />
-                  <View style={styles.info}>
-                    <Text style={styles.nameMuted} numberOfLines={1}>
-                      {r.name}
-                    </Text>
-                    <Text style={styles.subMuted}>{t('recurrings.everyDay', { day: r.day })}</Text>
-                  </View>
-                  <Text style={styles.amountMuted}>{money(Math.abs(r.amount))}</Text>
-                  <Pressable
-                    onPress={() => setActive.mutate({ id: r.id, active: true })}
-                    style={({ pressed }) => [styles.resume, pressed && styles.pressed]}
-                  >
-                    <Text style={styles.resumeText}>{t('recurrings.resume')}</Text>
-                  </Pressable>
-                </View>
+                  color={r.categoryColor}
+                  name={r.name}
+                  amount={money(Math.abs(r.amount))}
+                  amountVariant="muted"
+                  subtitle={t('recurrings.everyDay', { day: r.day })}
+                  muted
+                  showSeparator={index < paused.length - 1}
+                  trailing={
+                    <Pressable
+                      onPress={() => setActive.mutate({ id: r.id, active: true })}
+                      style={({ pressed }) => [styles.resume, pressed && styles.pressed]}
+                    >
+                      <Text style={styles.resumeText}>{t('recurrings.resume')}</Text>
+                    </Pressable>
+                  }
+                />
               ))}
             </Card>
           </>
@@ -314,6 +312,7 @@ const styles = StyleSheet.create({
   },
   totalCol: {
     flex: 1,
+    minWidth: 0,
   },
   totalColRight: {
     paddingLeft: 16,
@@ -342,69 +341,6 @@ const styles = StyleSheet.create({
   sectionSpacing: {
     paddingTop: spacing.xl,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 11,
-    paddingHorizontal: spacing.lg,
-  },
-  rowBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  swatch: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.sm,
-  },
-  swatchMuted: {
-    backgroundColor: 'rgba(60,60,67,0.15)',
-  },
-  info: {
-    flex: 1,
-    minWidth: 0,
-  },
-  name: {
-    ...typography.body,
-    color: colors.textPrimary,
-  },
-  nameMuted: {
-    ...typography.body,
-    color: colors.textTertiary,
-  },
-  subRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sub: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  subOverdue: {
-    color: colors.negative,
-  },
-  subMuted: {
-    ...typography.caption,
-    color: colors.textTertiary,
-  },
-  link: {
-    ...typography.caption,
-    color: colors.accent,
-  },
-  amount: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  amountIncome: {
-    color: colors.positive,
-  },
-  amountMuted: {
-    ...typography.body,
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
   check: {
     fontSize: 19,
     color: colors.accent,
@@ -414,6 +350,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     borderRadius: radius.pill,
     backgroundColor: colors.accent,
+    // El botón conserva su tamaño; el que cede es el nombre.
+    flexShrink: 0,
   },
   actionText: {
     ...typography.caption,
@@ -425,6 +363,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 13,
     borderRadius: radius.pill,
     backgroundColor: colors.disabledFill,
+    flexShrink: 0,
   },
   resumeText: {
     ...typography.caption,

@@ -6,7 +6,7 @@
  */
 export const layout = {
   /** Margen horizontal global de las pantallas (a ambos lados). */
-  screenPadding: 24,
+  screenPadding: 12,
 } as const;
 
 export type LayoutToken = keyof typeof layout;
