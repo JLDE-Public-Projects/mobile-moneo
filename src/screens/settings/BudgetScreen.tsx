@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,9 @@ import { BackLink } from '@/components/atoms/BackLink';
 import { Card } from '@/components/molecules/Card';
 import { BudgetRow } from '@/components/molecules/BudgetRow';
 import { QueryState } from '@/components/molecules/QueryState';
+import { EditBudgetSheet } from '@/components/organisms/EditBudgetSheet';
 import { useCategories } from '@/services/categories/category.queries';
+import { Category } from '@/services/categories/category.types';
 import { useBudgetAdjuster } from '@/hooks/useBudgetAdjuster';
 import { useTransactions } from '@/services/transactions/transaction.queries';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -38,6 +40,8 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
   const { data: transactions = [] } = useTransactions();
   const { adjust } = useBudgetAdjuster();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
+  // Categoría cuyo límite se está escribiendo directo (hoja de edición).
+  const [editing, setEditing] = useState<Category | null>(null);
 
   // Gasto por categoría (solo egresos reales; las transferencias no cuentan).
   const spentByCategory = useMemo(() => {
@@ -110,6 +114,7 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
                 barWidth={barWidth}
                 onIncrease={() => adjust(c.id, BUDGET_STEP)}
                 onDecrease={() => adjust(c.id, -BUDGET_STEP)}
+                onEdit={() => setEditing(c)}
                 showSeparator={index < expenseCategories.length - 1}
               />
             );
@@ -123,6 +128,8 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
 
         <AppFooter />
       </ScrollView>
+
+      <EditBudgetSheet category={editing} onClose={() => setEditing(null)} />
     </Screen>
   );
 }

@@ -193,7 +193,12 @@ export default {
     assignedSpent: 'Asignado / gastado',
     usedSuffix: ' usado',
     rowLabel: '{{spent}} de {{budget}}',
-    note: 'Cada toque mueve el límite {{step}}. Solo se avisa cuando pasas del 100%.',
+    note: 'Toca el importe para escribirlo directo, o usa +/− para ajustes finos de {{step}}. Solo se avisa cuando pasas del 100%.',
+    editSheet: {
+      title: 'Límite de {{name}}',
+      amountLabel: 'Límite mensual',
+      submit: 'Guardar',
+    },
   },
 
   categoryDetail: {
@@ -390,6 +395,7 @@ export default {
     editAccount: 'Editar {{name}}',
     decreaseBudget: 'Reducir presupuesto de {{name}}',
     increaseBudget: 'Aumentar presupuesto de {{name}}',
+    editBudget: 'Escribir presupuesto de {{name}}',
     removeCategory: 'Borrar {{name}}',
     clearSearch: 'Limpiar búsqueda',
     deleteKey: 'Borrar',

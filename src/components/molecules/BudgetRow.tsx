@@ -16,6 +16,8 @@ interface BudgetRowProps {
   onIncrease: () => void;
   /** Reduce el presupuesto. */
   onDecrease: () => void;
+  /** Abre la edición directa del importe (escribirlo en vez de tocar +/−). */
+  onEdit: () => void;
   /** Dibuja una línea separadora inferior. */
   showSeparator?: boolean;
 }
@@ -32,6 +34,7 @@ export function BudgetRow({
   barWidth,
   onIncrease,
   onDecrease,
+  onEdit,
   showSeparator = false,
 }: BudgetRowProps) {
   const { t } = useTranslation();
@@ -40,12 +43,17 @@ export function BudgetRow({
   return (
     <View style={[styles.row, showSeparator && styles.separator]}>
       <View style={styles.top}>
-        <View style={styles.info}>
+        <Pressable
+          onPress={onEdit}
+          accessibilityRole="button"
+          accessibilityLabel={t('accessibility.editBudget', { name })}
+          style={({ pressed }) => [styles.info, pressed && styles.infoPressed]}
+        >
           <Text style={styles.name} numberOfLines={1}>
             {name}
           </Text>
           <Text style={[styles.label, over && styles.labelOver]}>{label}</Text>
-        </View>
+        </Pressable>
 
         <Pressable
           onPress={onDecrease}
@@ -94,6 +102,9 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     minWidth: 0,
+  },
+  infoPressed: {
+    opacity: 0.6,
   },
   name: {
     ...typography.body,

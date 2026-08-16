@@ -184,7 +184,12 @@ export default {
     assignedSpent: 'Assigned / spent',
     usedSuffix: ' used',
     rowLabel: '{{spent}} of {{budget}}',
-    note: "Each tap moves the limit {{step}}. You're only warned once you pass 100%.",
+    note: "Tap the amount to type it directly, or use +/− for fine {{step}} adjustments. You're only warned once you pass 100%.",
+    editSheet: {
+      title: '{{name}} limit',
+      amountLabel: 'Monthly limit',
+      submit: 'Save',
+    },
   },
 
   categoryDetail: {
@@ -381,6 +386,7 @@ export default {
     editAccount: 'Edit {{name}}',
     decreaseBudget: 'Decrease budget for {{name}}',
     increaseBudget: 'Increase budget for {{name}}',
+    editBudget: 'Type budget for {{name}}',
     removeCategory: 'Delete {{name}}',
     clearSearch: 'Clear search',
     deleteKey: 'Delete',
