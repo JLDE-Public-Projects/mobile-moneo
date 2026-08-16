@@ -9,6 +9,12 @@ interface TransactionRowProps {
   color?: string;
   /** Subtítulo (fecha · nota o cuenta). */
   subtitle: string;
+  /**
+   * Color de la parte del subtítulo posterior al " · " (categoría o ruta de
+   * la transferencia). Si se omite, el subtítulo completo usa el color por
+   * defecto.
+   */
+  metaColor?: string;
   /** Importe ya formateado con signo (p. ej. "−248.400"). */
   amount: string;
   /** Si el importe es un ingreso (positivo), para colorearlo en verde. */
@@ -32,12 +38,19 @@ export function TransactionRow({
   category,
   color,
   subtitle,
+  metaColor,
   amount,
   income = false,
   neutral = false,
   onPress,
   showSeparator = false,
 }: TransactionRowProps) {
+  // El subtítulo tiene forma "día · meta"; si hay color de categoría, se
+  // separa para pintar solo la parte de la meta (día siempre neutro).
+  const separatorIndex = metaColor ? subtitle.indexOf(' · ') : -1;
+  const day = separatorIndex >= 0 ? subtitle.slice(0, separatorIndex) : subtitle;
+  const meta = separatorIndex >= 0 ? subtitle.slice(separatorIndex + 3) : null;
+
   return (
     <Pressable
       onPress={onPress}
@@ -56,7 +69,13 @@ export function TransactionRow({
           {category}
         </Text>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {subtitle}
+          {meta !== null ? (
+            <>
+              {day} · <Text style={{ color: metaColor }}>{meta}</Text>
+            </>
+          ) : (
+            subtitle
+          )}
         </Text>
       </View>
       <Text

@@ -172,12 +172,19 @@ export function MovementsScreen({
                   {filtered.map((tx, index) => {
                     const transfer = tx.isTransfer ? transferDisplay(tx, t) : null;
                     const day = formatDayMonth(tx.date, months);
+                    // La descripción es lo principal: identifica el movimiento
+                    // mejor que la categoría. Sin nota, la categoría pasa a
+                    // título y la cuenta ocupa el subtítulo.
+                    const title = transfer?.title ?? (tx.note || tx.category);
+                    const meta = transfer?.subtitle ?? (tx.note ? tx.category : tx.account);
+                    const isCategoryMeta = !transfer && !!tx.note;
                     return (
                       <TransactionRow
                         key={tx.id}
-                        category={transfer?.title ?? tx.category}
+                        category={title}
                         color={tx.categoryColor}
-                        subtitle={`${day} · ${transfer?.subtitle ?? (tx.note || tx.account)}`}
+                        subtitle={`${day} · ${meta}`}
+                        metaColor={isCategoryMeta ? tx.categoryColor : undefined}
                         // Una transferencia no suma ni resta al patrimonio, así
                         // que va sin signo: el "→" del subtítulo ya cuenta a
                         // dónde se movió el dinero.
