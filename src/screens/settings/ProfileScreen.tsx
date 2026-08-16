@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
 import { AppFooter } from '@/components/atoms/AppFooter';
@@ -98,8 +99,12 @@ export function ProfileScreen({ onBack }: ProfileScreenProps) {
     }
   };
 
-  const handleCopy = () => {
-    // TODO(clipboard): copiar al portapapeles con expo-clipboard.
+  const handleCopy = async () => {
+    if (!inviteCode.data) return;
+    // setStringAsync usa el portapapeles nativo (UIPasteboard en iOS,
+    // ClipboardManager en Android): funciona igual en ambos sin código
+    // por plataforma.
+    await Clipboard.setStringAsync(inviteCode.data);
     setCopyLabel(t('common.copied'));
     setTimeout(() => setCopyLabel(t('common.copy')), 1500);
   };
