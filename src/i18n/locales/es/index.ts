@@ -97,6 +97,7 @@ export default {
       wrongCurrentPassword: 'La clave actual no es correcta.',
       profileUpdateFailed: 'No pudimos actualizar tu perfil.',
       inviteCodeFetchFailed: 'No pudimos obtener tu código de invitación.',
+      deleteAccountFailed: 'No pudimos eliminar la cuenta.',
     },
   },
 
@@ -343,6 +344,18 @@ export default {
     language: 'Idioma',
     languageSheetTitle: 'Idioma',
     languageSystem: 'Predeterminado del sistema',
+    dangerZone: 'Zona de peligro',
+    deleteAccount: {
+      action: 'Eliminar mi cuenta',
+      note: 'Se borran tu cuenta y todos tus datos. No se puede deshacer.',
+      title: '¿Eliminar tu cuenta?',
+      warning:
+        'Se borrarán para siempre tus movimientos, cuentas, categorías y recurrentes. Esta acción no se puede deshacer.',
+      passwordLabel: 'Confirma con tu clave',
+      passwordPlaceholder: 'Tu clave actual',
+      confirm: 'Eliminar mi cuenta',
+      errorGeneric: 'No pudimos eliminar la cuenta. Inténtalo de nuevo.',
+    },
   },
 
   profile: {

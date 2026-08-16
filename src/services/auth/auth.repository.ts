@@ -24,4 +24,12 @@ export interface AuthRepository {
   updateProfile(input: UpdateProfileInput): Promise<AuthUser>;
   /** Código de invitación propio del usuario autenticado (para compartir). */
   getInviteCode(): Promise<string>;
+  /**
+   * Elimina la cuenta del usuario en sesión y todos sus datos.
+   *
+   * Pide la clave actual porque es irreversible: tener la sesión abierta (un
+   * teléfono desbloqueado, prestado un momento) no debería bastar para borrar
+   * el historial completo de alguien.
+   */
+  deleteAccount(password: string): Promise<void>;
 }

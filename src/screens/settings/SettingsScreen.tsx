@@ -23,6 +23,7 @@ import {
 } from '@/config/currencies';
 import {colors, layout, radius, spacing, typography} from '@/theme';
 import {Button} from "@/components/atoms/Button";
+import {DeleteAccountSheet} from '@/components/organisms/DeleteAccountSheet';
 
 /** Importe de ejemplo mostrado bajo cada moneda en el selector. */
 const CURRENCY_EXAMPLE = 1800000;
@@ -66,6 +67,7 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
    const languagePreference = useSettingsStore((state) => state.languagePreference);
    const setLanguagePreference = useSettingsStore((state) => state.setLanguagePreference);
    const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
+   const [deleteSheetOpen, setDeleteSheetOpen] = useState(false);
 
    const user = session?.user;
    const initial = (user?.name ?? '?').charAt(0).toUpperCase();
@@ -142,6 +144,22 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
                {t('settings.footerNote')}
             </Text>
 
+            {/* Zona de peligro: separada del resto para no tocarla sin querer. */}
+            <SectionLabel style={styles.dangerSection}>
+               {t('settings.dangerZone')}
+            </SectionLabel>
+            <Card>
+               <ListRow
+                  label={t('settings.deleteAccount.action')}
+                  tintColor={colors.negative}
+                  onPress={() => setDeleteSheetOpen(true)}
+                  showChevron={false}
+               />
+            </Card>
+            <Text style={styles.note}>
+               {t('settings.deleteAccount.note')}
+            </Text>
+
             <AppFooter/>
 
          </ScrollView>
@@ -164,6 +182,12 @@ export function SettingsScreen({onBack, onOpenProfile, onOpenCategories, onOpenB
             options={languageOptions}
             selected={languagePreference}
             onSelect={setLanguagePreference}
+         />
+
+         {/* Confirmación de eliminación de cuenta (pide la clave) */}
+         <DeleteAccountSheet
+            visible={deleteSheetOpen}
+            onClose={() => setDeleteSheetOpen(false)}
          />
       </Screen>
    );
@@ -224,6 +248,9 @@ const styles = StyleSheet.create({
       ...typography.caption,
       color: colors.textSecondary,
       marginTop: 1,
+   },
+   dangerSection: {
+      paddingTop: spacing.xxl,
    },
    logoutCard: {
       marginTop: spacing.xxl,

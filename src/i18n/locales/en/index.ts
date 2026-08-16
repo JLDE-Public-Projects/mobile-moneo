@@ -88,6 +88,7 @@ export default {
       wrongCurrentPassword: 'The current password is incorrect.',
       profileUpdateFailed: "We couldn't update your profile.",
       inviteCodeFetchFailed: "We couldn't get your invite code.",
+      deleteAccountFailed: "We couldn't delete the account.",
     },
   },
 
@@ -334,6 +335,18 @@ export default {
     language: 'Language',
     languageSheetTitle: 'Language',
     languageSystem: 'System default',
+    dangerZone: 'Danger zone',
+    deleteAccount: {
+      action: 'Delete my account',
+      note: 'Your account and all your data are erased. This cannot be undone.',
+      title: 'Delete your account?',
+      warning:
+        'Your transactions, accounts, categories and recurring items will be erased for good. This cannot be undone.',
+      passwordLabel: 'Confirm with your password',
+      passwordPlaceholder: 'Your current password',
+      confirm: 'Delete my account',
+      errorGeneric: "We couldn't delete the account. Try again.",
+    },
   },
 
   profile: {

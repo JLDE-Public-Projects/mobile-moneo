@@ -167,4 +167,31 @@ export const supabaseAuthRepository: AuthRepository = {
     }
     return data.invite_code as string;
   },
+
+  async deleteAccount(password: string): Promise<void> {
+    // Se verifica la clave reautenticando, igual que al cambiarla: es la única
+    // forma de comprobarla desde el cliente, y sin esto bastaría una sesión
+    // abierta para borrar la cuenta de alguien.
+    const { data: current } = await supabase.auth.getUser();
+    const username = (current.user?.user_metadata?.username as string) ?? '';
+
+    const { error: reauthError } = await supabase.auth.signInWithPassword({
+      email: usernameToEmail(username),
+      password,
+    });
+    if (reauthError) {
+      throw new Error(i18n.t('auth.repository.wrongCurrentPassword'));
+    }
+
+    // El borrado de `auth.users` arrastra el resto por las claves foráneas
+    // (ver supabase/delete_account.sql).
+    const { error } = await supabase.rpc('delete_own_account');
+    if (error) {
+      throw new Error(i18n.t('auth.repository.deleteAccountFailed'));
+    }
+
+    // La sesión ya no apunta a ningún usuario: cerrarla deja la app en el
+    // flujo de autenticación en vez de en pantallas que fallarían al leer.
+    await supabase.auth.signOut();
+  },
 };

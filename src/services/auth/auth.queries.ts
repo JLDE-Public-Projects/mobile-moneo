@@ -55,6 +55,20 @@ export function useUpdateProfile(): UseMutationResult<AuthUser, Error, UpdatePro
 }
 
 /**
+ * Mutación para eliminar la cuenta y todos sus datos.
+ *
+ * No hace falta limpiar el store: el repositorio cierra la sesión al terminar
+ * y el listener de Supabase (ver `authSession.ts`) la vacía solo, que es el
+ * mismo camino que sigue un cierre de sesión normal.
+ */
+export function useDeleteAccount(): UseMutationResult<void, Error, string> {
+   return useMutation({
+      mutationFn: (password: string) =>
+         getRepositories().auth.deleteAccount(password),
+   });
+}
+
+/**
  * Consulta el código de invitación propio del usuario para compartirlo.
  * Se cachea por sesión; solo se pide cuando hay un usuario autenticado.
  */
