@@ -79,13 +79,13 @@ begin
   select p_user, d.name, d.type, d.color, d.budget,
          now() + (d.ord * interval '1 millisecond')
   from (values
-    (1, 'Arriendo',      'expense', '#89A4DE', 1800000),
-    (2, 'Mercado',       'expense', '#76C479',  800000),
-    (3, 'Transporte',    'expense', '#D78951',  400000),
-    (4, 'Suscripciones', 'expense', '#C480D4',  150000),
-    (5, 'Salud',         'expense', '#CA8377',  500000),
-    (6, 'Ahorros',       'expense', '#60AD64',  800000),
-    (7, 'Inversiones',   'expense', '#48B7BD',  250000),
+    (1, 'Arriendo',      'expense', '#89A4DE', 0),
+    (2, 'Mercado',       'expense', '#76C479',  0),
+    (3, 'Transporte',    'expense', '#D78951',  0),
+    (4, 'Suscripciones', 'expense', '#C480D4',  0),
+    (5, 'Salud',         'expense', '#CA8377',  0),
+    (6, 'Ahorros',       'expense', '#60AD64',  0),
+    (7, 'Inversiones',   'expense', '#48B7BD',  0),
     (8, 'Salario',       'income',  '#47944C',       0),
     (9, 'Freelance',     'income',  '#4E9A52',       0)
   ) as d(ord, name, type, color, budget);

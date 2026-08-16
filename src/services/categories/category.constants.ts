@@ -21,13 +21,13 @@ interface CategorySeed {
  * (con sus presupuestos por defecto para egresos; los ingresos van sin límite).
  */
 export const DEFAULT_CATEGORIES: CategorySeed[] = [
-  { name: 'Arriendo', type: 'expense', color: '#89A4DE', budget: 1800000 },
-  { name: 'Mercado', type: 'expense', color: '#76C479', budget: 800000 },
-  { name: 'Transporte', type: 'expense', color: '#D78951', budget: 400000 },
-  { name: 'Suscripciones', type: 'expense', color: '#C480D4', budget: 150000 },
-  { name: 'Salud', type: 'expense', color: '#CA8377', budget: 500000 },
-  { name: 'Ahorros', type: 'expense', color: '#60AD64', budget: 800000 },
-  { name: 'Inversiones', type: 'expense', color: '#48B7BD', budget: 250000 },
+  { name: 'Arriendo', type: 'expense', color: '#89A4DE', budget: 0 },
+  { name: 'Mercado', type: 'expense', color: '#76C479', budget: 0 },
+  { name: 'Transporte', type: 'expense', color: '#D78951', budget: 0 },
+  { name: 'Suscripciones', type: 'expense', color: '#C480D4', budget: 0 },
+  { name: 'Salud', type: 'expense', color: '#CA8377', budget: 0 },
+  { name: 'Ahorros', type: 'expense', color: '#60AD64', budget: 0 },
+  { name: 'Inversiones', type: 'expense', color: '#48B7BD', budget: 0 },
   { name: 'Salario', type: 'income', color: '#47944C', budget: 0 },
   { name: 'Freelance', type: 'income', color: '#4E9A52', budget: 0 },
 ];
