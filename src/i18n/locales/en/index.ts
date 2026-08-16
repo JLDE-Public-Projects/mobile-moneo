@@ -7,6 +7,7 @@ export default {
   common: {
     footerMadeWith: 'Made with ❤️ by ',
     footerAuthor: 'Jader Diaz',
+    footerVersion: ' · v{{version}}',
     cancel: 'Cancel',
     save: 'Save',
     saveChanges: 'Save changes',

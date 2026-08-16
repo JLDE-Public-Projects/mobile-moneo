@@ -2,6 +2,7 @@ import React from 'react';
 import { Linking, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography } from '@/theme';
+import { APP_VERSION } from '@/config/appVersion';
 
 /** Sitio del autor al que enlaza el pie de página. */
 const AUTHOR_URL = 'https://jaderdiaz.com/';
@@ -37,6 +38,7 @@ export function AppFooter() {
       <Text style={styles.link} onPress={openAuthorSite}>
         {t('common.footerAuthor')}
       </Text>
+      {t('common.footerVersion', { version: APP_VERSION })}
     </Text>
   );
 }
