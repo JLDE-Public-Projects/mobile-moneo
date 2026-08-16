@@ -11,6 +11,8 @@ import { useCategories } from '@/services/categories/category.queries';
 import { CategoryType } from '@/services/categories/category.types';
 import { useAccounts } from '@/services/accounts/account.queries';
 import { NewRecurring } from '@/services/recurrings/recurring.types';
+import { useSettingsStore } from '@/store/settingsStore';
+import { formatNumber, getCurrency } from '@/config/currencies';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface NewRecurringSheetProps {
@@ -39,6 +41,7 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
   ];
   const { data: categories = [] } = useCategories();
   const { data: accounts = [] } = useAccounts();
+  const currency = getCurrency(useSettingsStore((state) => state.currency));
 
   const [type, setType] = useState<CategoryType>('expense');
   const [name, setName] = useState('');
@@ -158,7 +161,10 @@ export function NewRecurringSheet({ visible, onClose, onCreate }: NewRecurringSh
             placeholder={t('accounts.sheet.amountPlaceholder')}
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
-            value={amount}
+            // Se muestra agrupado por miles (como en el resto de la app) para
+            // que un valor grande se pueda leer mientras se escribe; el
+            // estado sigue siendo solo dígitos.
+            value={amount ? formatNumber(Number(amount), currency) : ''}
             onChangeText={(v) => setAmount(onlyDigits(v))}
           />
         </View>

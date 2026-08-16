@@ -12,6 +12,8 @@ import {
 } from '@/services/accounts/account.constants';
 import { Account, AccountKind, NewAccount } from '@/services/accounts/account.types';
 import { COLOR_PALETTE } from '@/config/palette';
+import { useSettingsStore } from '@/store/settingsStore';
+import { formatNumber, getCurrency } from '@/config/currencies';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface AccountSheetProps {
@@ -58,6 +60,7 @@ export function AccountSheet({
   const [selectedColor, setSelectedColor] = useState(color);
   const [balance, setBalance] = useState('');
   const [cutDay, setCutDay] = useState('');
+  const currency = getCurrency(useSettingsStore((state) => state.currency));
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -192,7 +195,9 @@ export function AccountSheet({
             placeholder={t('accounts.sheet.amountPlaceholder')}
             placeholderTextColor={colors.textTertiary}
             keyboardType="number-pad"
-            value={balance}
+            // Agrupado por miles mientras se escribe, igual que en Recurrentes:
+            // sin esto un valor grande es difícil de leer/verificar.
+            value={balance ? formatNumber(Number(balance), currency) : ''}
             onChangeText={(v) => setBalance(onlyDigits(v))}
           />
         </View>
