@@ -227,6 +227,7 @@ export default {
       titleNew: 'Agregar cuenta',
       namePlaceholder: 'Nombre de la cuenta',
       amountPlaceholder: '0',
+      colorLabel: 'Color',
       cutDay: 'Fecha de corte',
       cutDayPlaceholder: 'Día (1-31)',
       saveNew: 'Guardar cuenta',

@@ -218,6 +218,7 @@ export default {
       titleNew: 'Add account',
       namePlaceholder: 'Account name',
       amountPlaceholder: '0',
+      colorLabel: 'Color',
       cutDay: 'Due date',
       cutDayPlaceholder: 'Day (1-31)',
       saveNew: 'Save account',

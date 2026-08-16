@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BottomSheet } from '@/components/organisms/BottomSheet';
 import { Button } from '@/components/atoms/Button';
@@ -11,6 +11,7 @@ import {
   DEFAULT_ACCOUNT_KIND,
 } from '@/services/accounts/account.constants';
 import { Account, AccountKind, NewAccount } from '@/services/accounts/account.types';
+import { COLOR_PALETTE } from '@/config/palette';
 import { colors, radius, spacing, typography } from '@/theme';
 
 interface AccountSheetProps {
@@ -52,6 +53,9 @@ export function AccountSheet({
 
   const [kind, setKind] = useState<AccountKind>(DEFAULT_ACCOUNT_KIND);
   const [name, setName] = useState('');
+  // Color elegido. Al crear parte del que sugiere la pantalla (el siguiente de
+  // la paleta), pero el usuario puede cambiarlo.
+  const [selectedColor, setSelectedColor] = useState(color);
   const [balance, setBalance] = useState('');
   const [cutDay, setCutDay] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -69,17 +73,18 @@ export function AccountSheet({
       // positivo: el signo lo pone el tipo de cuenta al guardar.
       setBalance(account.balance === 0 ? '' : String(Math.abs(account.balance)));
       setCutDay(account.cutDay ? String(account.cutDay) : '');
+      setSelectedColor(account.color);
     } else {
       setKind(DEFAULT_ACCOUNT_KIND);
       setName('');
       setBalance('');
       setCutDay('');
+      setSelectedColor(color);
     }
-  }, [visible, account]);
+  }, [visible, account, color]);
 
   const isCredit = kind === 'credit';
   const canSubmit = name.trim().length > 0;
-  const swatchColor = account?.color ?? color;
 
   const handleSave = async () => {
     if (isSubmitting) return;
@@ -100,7 +105,7 @@ export function AccountSheet({
         name: name.trim(),
         kind,
         balance: signedBalance,
-        color: swatchColor,
+        color: selectedColor,
         cutDay: day,
       });
       onClose();
@@ -168,7 +173,7 @@ export function AccountSheet({
       <View style={styles.card}>
         {/* Nombre con vista previa del color */}
         <View style={styles.row}>
-          <View style={[styles.swatch, { backgroundColor: swatchColor }]} />
+          <View style={[styles.swatch, { backgroundColor: selectedColor }]} />
           <TextInput
             style={styles.input}
             placeholder={t('accounts.sheet.namePlaceholder')}
@@ -179,7 +184,7 @@ export function AccountSheet({
         </View>
 
         {/* Saldo / deuda */}
-        <View style={[styles.row, !isCredit && styles.rowLast]}>
+        <View style={styles.row}>
           <Text style={styles.label}>{balanceLabel(kind, t)}</Text>
           <Text style={styles.currencySign}>$</Text>
           <TextInput
@@ -194,7 +199,7 @@ export function AccountSheet({
 
         {/* Fecha de corte (solo crédito) */}
         {isCredit && (
-          <View style={[styles.row, styles.rowLast]}>
+          <View style={styles.row}>
             <Text style={[styles.label, styles.labelGrow]}>{t('accounts.sheet.cutDay')}</Text>
             <TextInput
               style={[styles.input, styles.cutInput]}
@@ -206,6 +211,30 @@ export function AccountSheet({
             />
           </View>
         )}
+
+        {/* Color: identifica la cuenta en listas y movimientos. */}
+        <View style={styles.colorSection}>
+          <Text style={styles.colorLabel}>{t('accounts.sheet.colorLabel')}</Text>
+          <View style={styles.swatches}>
+            {COLOR_PALETTE.map((paletteColor) => {
+              const selected = paletteColor === selectedColor;
+              return (
+                <Pressable
+                  key={paletteColor}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.color', { name: paletteColor })}
+                  accessibilityState={{ selected }}
+                  onPress={() => setSelectedColor(paletteColor)}
+                  style={[styles.ring, selected && styles.ringActive]}
+                >
+                  <View
+                    style={[styles.colorSwatch, { backgroundColor: paletteColor }]}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
       </View>
 
       <FormMessage message={errorMessage} />
@@ -255,8 +284,34 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
   },
-  rowLast: {
-    borderBottomWidth: 0,
+  colorSection: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: 14,
+    paddingBottom: spacing.lg,
+  },
+  colorLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  swatches: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  ring: {
+    padding: 2,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  ringActive: {
+    borderColor: colors.accent,
+  },
+  colorSwatch: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
   },
   swatch: {
     width: 30,
