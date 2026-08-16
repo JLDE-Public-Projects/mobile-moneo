@@ -13,6 +13,11 @@ interface TransactionRowProps {
   amount: string;
   /** Si el importe es un ingreso (positivo), para colorearlo en verde. */
   income?: boolean;
+  /**
+   * Muestra el importe en gris en vez de verde/rojo: para transferencias, que
+   * no son ni ganancia ni pérdida, solo dinero cambiando de cuenta.
+   */
+  neutral?: boolean;
   /** Acción al pulsar (abre el detalle). */
   onPress?: () => void;
   /** Dibuja una línea separadora inferior. */
@@ -29,6 +34,7 @@ export function TransactionRow({
   subtitle,
   amount,
   income = false,
+  neutral = false,
   onPress,
   showSeparator = false,
 }: TransactionRowProps) {
@@ -53,7 +59,12 @@ export function TransactionRow({
           {subtitle}
         </Text>
       </View>
-      <Text style={[styles.amount, income ? styles.income : styles.expense]}>
+      <Text
+        style={[
+          styles.amount,
+          neutral ? styles.neutral : income ? styles.income : styles.expense,
+        ]}
+      >
         {amount}
       </Text>
     </Pressable>
@@ -101,5 +112,8 @@ const styles = StyleSheet.create({
   },
   expense: {
     color: colors.negative,
+  },
+  neutral: {
+    color: colors.textSecondary,
   },
 });

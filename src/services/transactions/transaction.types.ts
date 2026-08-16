@@ -47,6 +47,16 @@ export interface Transaction {
   date: number;
   /** Id del recurrente que lo originó (o null si es un movimiento suelto). */
   recurringId: string | null;
+  /**
+   * Si es una de las dos mitades de una transferencia entre cuentas propias.
+   *
+   * No es un ingreso ni un egreso real —el dinero no sale del usuario, solo
+   * cambia de cuenta—, así que se excluye de los totales y del desglose por
+   * categoría; sí afecta el saldo de cada cuenta, que es su propósito.
+   */
+  isTransfer: boolean;
+  /** Enlaza las dos mitades de una transferencia; null si no lo es. */
+  transferGroupId: string | null;
   createdAt: number;
 }
 
@@ -62,4 +72,15 @@ export interface NewTransaction {
   date: number;
   /** Recurrente que lo origina, si aplica. */
   recurringId?: string | null;
+}
+
+/** Datos para transferir dinero entre dos cuentas propias. */
+export interface NewTransfer {
+  /** Cuenta de la que sale el dinero. */
+  fromAccountId: string;
+  /** Cuenta a la que llega el dinero. */
+  toAccountId: string;
+  /** Importe a transferir, siempre positivo. */
+  amount: number;
+  date: number;
 }

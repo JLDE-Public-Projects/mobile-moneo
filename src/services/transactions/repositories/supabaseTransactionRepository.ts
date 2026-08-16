@@ -14,12 +14,14 @@ interface TransactionRow {
    account_id: string | null;
    date: string;
    recurring_id: string | null;
+   is_transfer: boolean;
+   transfer_group_id: string | null;
    created_at: string;
 }
 
 /** Columnas que pedimos siempre (evita traer `user_id`, que no usa la UI). */
 const COLUMNS =
-   'id, amount, category, category_color, note, account, account_id, date, recurring_id, created_at';
+   'id, amount, category, category_color, note, account, account_id, date, recurring_id, is_transfer, transfer_group_id, created_at';
 
 /**
  * Convierte una fila al modelo del dominio.
@@ -37,6 +39,8 @@ function toTransaction(row: TransactionRow): Transaction {
       accountId: row.account_id,
       date: new Date(row.date).getTime(),
       recurringId: row.recurring_id,
+      isTransfer: row.is_transfer,
+      transferGroupId: row.transfer_group_id,
       createdAt: new Date(row.created_at).getTime(),
    };
 }
@@ -118,6 +122,35 @@ export const supabaseTransactionRepository: TransactionRepository = {
 
    async remove(id) {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) {
+         throw new Error(i18n.t('movements.repository.removeFailed'));
+      }
+   },
+
+   async transfer({ fromAccountId, toAccountId, amount, date }) {
+      // El RPC crea las dos mitades dentro de una sola transacción de base de
+      // datos: si algo falla, no queda un lado registrado sin el otro (el
+      // saldo de una cuenta bajaría sin que el de la otra subiera).
+      const { error } = await supabase.rpc('create_transfer', {
+         p_from_account: fromAccountId,
+         p_to_account: toAccountId,
+         p_amount: amount,
+         p_date: new Date(date).toISOString(),
+      });
+
+      if (error) {
+         throw new Error(i18n.t('movements.repository.transferFailed'));
+      }
+   },
+
+   async removeTransferGroup(groupId) {
+      // Se borran las dos mitades a la vez: media transferencia dejaría los
+      // saldos descuadrados.
+      const { error } = await supabase
+         .from('transactions')
+         .delete()
+         .eq('transfer_group_id', groupId);
+
       if (error) {
          throw new Error(i18n.t('movements.repository.removeFailed'));
       }

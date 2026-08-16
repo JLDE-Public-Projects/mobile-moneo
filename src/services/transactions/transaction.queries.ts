@@ -10,6 +10,7 @@ import { getRepositories } from '@/services/container';
 import {
   MonthSummary,
   NewTransaction,
+  NewTransfer,
   Transaction,
 } from '@/services/transactions/transaction.types';
 import {
@@ -86,6 +87,9 @@ export function useMonthlyHistory(
       );
 
       for (const t of transactions) {
+        // Una transferencia no es ingreso ni egreso: el dinero solo cambia de
+        // cuenta, así que sumarla inflaría ambos lados del histórico.
+        if (t.isTransfer) continue;
         const month = byMonth.get(monthRange(t.date).from);
         if (!month) continue;
         if (t.amount > 0) {
@@ -144,6 +148,26 @@ export function useRemoveTransaction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => getRepositories().transactions.remove(id),
+    onSuccess: () => refreshAfterChange(queryClient),
+  });
+}
+
+/** Mutación para transferir dinero entre dos cuentas propias. */
+export function useCreateTransfer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewTransfer) =>
+      getRepositories().transactions.transfer(input),
+    onSuccess: () => refreshAfterChange(queryClient),
+  });
+}
+
+/** Mutación para eliminar las dos mitades de una transferencia. */
+export function useRemoveTransferGroup() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (groupId: string) =>
+      getRepositories().transactions.removeTransferGroup(groupId),
     onSuccess: () => refreshAfterChange(queryClient),
   });
 }

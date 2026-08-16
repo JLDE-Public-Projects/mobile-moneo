@@ -12,6 +12,10 @@ import { ListRow } from '@/components/molecules/ListRow';
 import { TransactionRow } from '@/components/molecules/TransactionRow';
 import { TAB_BAR_SPACE } from '@/screens/main/PlaceholderScreen';
 import { useTransactions } from '@/services/transactions/transaction.queries';
+import {
+  collapseTransfers,
+  transferDisplay,
+} from '@/services/transactions/transaction.constants';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
 import { formatDayMonth } from '@/utils/date';
@@ -54,18 +58,20 @@ export function HomeScreen({
   const currency = getCurrency(useSettingsStore((state) => state.currency));
   const currentMonthName = months.long[new Date().getMonth()];
 
-  // Totales del mes a partir de los movimientos.
+  // Totales del mes a partir de los movimientos. Las transferencias quedan
+  // fuera: el dinero no entra ni sale, solo cambia de cuenta.
   const { income, expense, balance } = useMemo(() => {
-    const inc = transactions
+    const real = transactions.filter((t) => !t.isTransfer);
+    const inc = real
       .filter((t) => t.amount > 0)
       .reduce((sum, t) => sum + t.amount, 0);
-    const exp = transactions
+    const exp = real
       .filter((t) => t.amount < 0)
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
     return { income: inc, expense: exp, balance: inc - exp };
   }, [transactions]);
 
-  const recent = transactions.slice(0, RECENT_COUNT);
+  const recent = collapseTransfers(transactions).slice(0, RECENT_COUNT);
 
   return (
     <Screen bottomInset={false}>
@@ -119,17 +125,26 @@ export function HomeScreen({
           {t('home.lastMovements')}
         </SectionLabel>
         <Card>
-          {recent.map((tx) => (
-            <TransactionRow
-              key={tx.id}
-              category={tx.category}
-              color={tx.categoryColor}
-              subtitle={`${formatDayMonth(tx.date, months)} · ${tx.note || tx.account}`}
-              amount={`${tx.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(tx.amount), currency)}`}
-              income={tx.amount > 0}
-              showSeparator
-            />
-          ))}
+          {recent.map((tx) => {
+            const transfer = tx.isTransfer ? transferDisplay(tx, t) : null;
+            const day = formatDayMonth(tx.date, months);
+            return (
+              <TransactionRow
+                key={tx.id}
+                category={transfer?.title ?? tx.category}
+                color={tx.categoryColor}
+                subtitle={`${day} · ${transfer?.subtitle ?? (tx.note || tx.account)}`}
+                // Una transferencia no suma ni resta al patrimonio: va sin
+                // signo, y el "→" del subtítulo cuenta a dónde fue el dinero.
+                amount={`${
+                  tx.isTransfer ? '' : tx.amount > 0 ? '+' : '−'
+                }${formatNumber(Math.abs(tx.amount), currency)}`}
+                income={tx.amount > 0}
+                neutral={tx.isTransfer}
+                showSeparator
+              />
+            );
+          })}
           <Pressable
             onPress={onSeeAllMovements}
             accessibilityRole="button"

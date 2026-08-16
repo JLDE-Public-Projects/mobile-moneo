@@ -66,7 +66,8 @@ export function ExpensesScreen({
   const { categories, total, max } = useMemo(() => {
     const byCategory = new Map<string, CategoryTotal>();
     for (const t of transactions) {
-      if (t.amount >= 0) continue;
+      // Una transferencia no es un gasto: el dinero sigue siendo del usuario.
+      if (t.amount >= 0 || t.isTransfer) continue;
       const amount = Math.abs(t.amount);
       const current = byCategory.get(t.category);
       if (current) {

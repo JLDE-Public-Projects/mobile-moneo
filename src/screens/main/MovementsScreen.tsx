@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useTranslation } from 'react-i18next';
 import { Screen } from '@/components/layout/Screen';
@@ -14,8 +14,15 @@ import { TransactionRow } from '@/components/molecules/TransactionRow';
 import { QueryState } from '@/components/molecules/QueryState';
 import { EmptyTransactions } from '@/components/organisms/EmptyTransactions';
 import { TAB_BAR_SPACE } from '@/screens/main/PlaceholderScreen';
-import { useTransactions } from '@/services/transactions/transaction.queries';
-import { transactionFilterOptions } from '@/services/transactions/transaction.constants';
+import {
+  useRemoveTransferGroup,
+  useTransactions,
+} from '@/services/transactions/transaction.queries';
+import {
+  collapseTransfers,
+  transactionFilterOptions,
+  transferDisplay,
+} from '@/services/transactions/transaction.constants';
 import { Transaction, TransactionFilter } from '@/services/transactions/transaction.types';
 import { useSettingsStore } from '@/store/settingsStore';
 import { formatNumber, getCurrency } from '@/config/currencies';
@@ -47,6 +54,7 @@ export function MovementsScreen({
   const months = useMonthNames();
   const { data: transactions = [], isLoading, isError, refetch } = useTransactions();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
+  const removeTransferGroup = useRemoveTransferGroup();
 
   // Mes en curso, que es el periodo que la consulta ya trae del servidor.
   const month = monthLong(Date.now(), months);
@@ -54,11 +62,13 @@ export function MovementsScreen({
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<TransactionFilter>('all');
 
-  // Filtramos por tipo y, si hay búsqueda, por nota o categoría.
+  // Filtramos por tipo y, si hay búsqueda, por nota o categoría. Las
+  // transferencias solo salen en "Todos": no son ingreso ni egreso, así que
+  // en esos dos filtros descuadrarían la lectura.
   const filtered = useMemo(() => {
-    const byType = transactions.filter((t) => {
-      if (filter === 'income') return t.amount > 0;
-      if (filter === 'expense') return t.amount < 0;
+    const byType = collapseTransfers(transactions).filter((t) => {
+      if (filter === 'income') return t.amount > 0 && !t.isTransfer;
+      if (filter === 'expense') return t.amount < 0 && !t.isTransfer;
       return true;
     });
     const q = query.trim().toLowerCase();
@@ -75,6 +85,30 @@ export function MovementsScreen({
   const hasFilters = query.trim().length > 0 || filter !== 'all';
   const isFresh = transactions.length === 0;
   const isEmpty = filtered.length === 0;
+
+  // Una transferencia no se edita: cambiarle un lado rompería la simetría con
+  // el otro. Tocarla ofrece deshacerla entera, que es la acción que tiene
+  // sentido sobre ella.
+  const handleTransferPress = (tx: Transaction) => {
+    const groupId = tx.transferGroupId;
+    if (!groupId) return;
+
+    Alert.alert(
+      t('movements.transfer.deleteConfirmTitle'),
+      t('movements.transfer.deleteConfirmMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () =>
+            removeTransferGroup.mutate(groupId, {
+              onError: () => Alert.alert(t('movements.transfer.errorDelete')),
+            }),
+        },
+      ],
+    );
+  };
 
   return (
     <Screen bottomInset={false}>
@@ -135,18 +169,30 @@ export function MovementsScreen({
                 </Text>
               ) : (
                 <Card>
-                  {filtered.map((tx, index) => (
-                    <TransactionRow
-                      key={tx.id}
-                      category={tx.category}
-                      color={tx.categoryColor}
-                      subtitle={`${formatDayMonth(tx.date, months)} · ${tx.note || tx.account}`}
-                      amount={`${tx.amount > 0 ? '+' : '−'}${formatNumber(Math.abs(tx.amount), currency)}`}
-                      income={tx.amount > 0}
-                      onPress={() => onOpenTransaction(tx)}
-                      showSeparator={index < filtered.length - 1}
-                    />
-                  ))}
+                  {filtered.map((tx, index) => {
+                    const transfer = tx.isTransfer ? transferDisplay(tx, t) : null;
+                    const day = formatDayMonth(tx.date, months);
+                    return (
+                      <TransactionRow
+                        key={tx.id}
+                        category={transfer?.title ?? tx.category}
+                        color={tx.categoryColor}
+                        subtitle={`${day} · ${transfer?.subtitle ?? (tx.note || tx.account)}`}
+                        // Una transferencia no suma ni resta al patrimonio, así
+                        // que va sin signo: el "→" del subtítulo ya cuenta a
+                        // dónde se movió el dinero.
+                        amount={`${
+                          tx.isTransfer ? '' : tx.amount > 0 ? '+' : '−'
+                        }${formatNumber(Math.abs(tx.amount), currency)}`}
+                        income={tx.amount > 0}
+                        neutral={tx.isTransfer}
+                        onPress={() =>
+                          tx.isTransfer ? handleTransferPress(tx) : onOpenTransaction(tx)
+                        }
+                        showSeparator={index < filtered.length - 1}
+                      />
+                    );
+                  })}
                 </Card>
               )}
             </>

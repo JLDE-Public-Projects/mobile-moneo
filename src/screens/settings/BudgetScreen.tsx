@@ -39,11 +39,11 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
   const { adjust } = useBudgetAdjuster();
   const currency = getCurrency(useSettingsStore((state) => state.currency));
 
-  // Gasto por categoría (solo egresos).
+  // Gasto por categoría (solo egresos reales; las transferencias no cuentan).
   const spentByCategory = useMemo(() => {
     const map = new Map<string, number>();
     for (const t of transactions) {
-      if (t.amount >= 0) continue;
+      if (t.amount >= 0 || t.isTransfer) continue;
       map.set(t.category, (map.get(t.category) ?? 0) + Math.abs(t.amount));
     }
     return map;
@@ -54,7 +54,7 @@ export function BudgetScreen({ onBack }: BudgetScreenProps) {
   const totalSpent = useMemo(
     () =>
       transactions
-        .filter((t) => t.amount < 0)
+        .filter((t) => t.amount < 0 && !t.isTransfer)
         .reduce((sum, t) => sum + Math.abs(t.amount), 0),
     [transactions],
   );

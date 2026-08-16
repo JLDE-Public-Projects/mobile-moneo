@@ -1,4 +1,8 @@
-import { NewTransaction, Transaction } from '@/services/transactions/transaction.types';
+import {
+  NewTransaction,
+  NewTransfer,
+  Transaction,
+} from '@/services/transactions/transaction.types';
 import { DateRange } from '@/utils/date';
 
 /**
@@ -23,4 +27,11 @@ export interface TransactionRepository {
   update(id: string, input: NewTransaction): Promise<Transaction>;
   /** Elimina un movimiento por id. */
   remove(id: string): Promise<void>;
+  /**
+   * Transfiere dinero entre dos cuentas propias creando las dos mitades del
+   * movimiento (egreso en origen, ingreso en destino) de forma atómica.
+   */
+  transfer(input: NewTransfer): Promise<void>;
+  /** Elimina las dos mitades de una transferencia a la vez. */
+  removeTransferGroup(groupId: string): Promise<void>;
 }

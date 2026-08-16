@@ -134,6 +134,34 @@ export default {
       addFailed: "We couldn't record the transaction.",
       updateFailed: "We couldn't save the changes.",
       removeFailed: "We couldn't delete the transaction.",
+      transferFailed: "We couldn't make the transfer.",
+    },
+    addMenu: {
+      newTransactionShort: 'Movement',
+      transferLabel: 'Transfer',
+    },
+    transfer: {
+      label: 'Transfer',
+      route: '{{from}} → {{to}}',
+      to: 'To {{account}}',
+      from: 'From {{account}}',
+      deleteConfirmTitle: 'Delete this transfer?',
+      deleteConfirmMessage: "It's reversed on both accounts.",
+      errorDelete: "We couldn't delete the transfer.",
+    },
+    transferModal: {
+      title: 'Transfer',
+      saving: 'Transferring…',
+      from: 'From',
+      to: 'To',
+      chooseAccount: 'Choose account',
+      swap: 'Swap accounts',
+      available: 'Available {{amount}}',
+      sameAccountHint: 'Choose two different accounts.',
+      needsTwoAccounts: 'You need at least two accounts to transfer between them.',
+      createAccount: 'Create an account',
+      save: 'Transfer',
+      errorSave: "We couldn't make the transfer. Try again.",
     },
   },
 
@@ -343,6 +371,7 @@ export default {
     clearSearch: 'Clear search',
     deleteKey: 'Delete',
     newTransaction: 'New transaction',
+    addMenu: 'Open add menu',
   },
 
   transactionFilters: {

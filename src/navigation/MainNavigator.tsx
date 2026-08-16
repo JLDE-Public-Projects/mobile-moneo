@@ -18,6 +18,7 @@ import { CategoryDetailScreen } from '@/screens/main/CategoryDetailScreen';
 import { HistoryScreen } from '@/screens/main/HistoryScreen';
 import { RecurringsScreen } from '@/screens/main/RecurringsScreen';
 import { AddTransactionModal } from '@/components/organisms/AddTransactionModal';
+import { TransferModal } from '@/components/organisms/TransferModal';
 import { Transaction } from '@/services/transactions/transaction.types';
 import { colors } from '@/theme';
 
@@ -59,6 +60,7 @@ export function MainNavigator() {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [detail, setDetail] = useState<DetailScreen>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   // Movimiento abierto para editar; null cuando se está registrando uno nuevo.
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   // A dónde volver desde Presupuesto (se abre desde Ajustes o desde Gastos).
@@ -177,12 +179,13 @@ export function MainNavigator() {
             setDetail(null);
             setActiveTab(id as TabId);
           }}
-          onAdd={() => {
-            // El botón siempre registra uno nuevo, aunque antes se hubiera
-            // abierto un movimiento para editarlo.
+          onNewTransaction={() => {
+            // Siempre registra uno nuevo, aunque antes se hubiera abierto un
+            // movimiento para editarlo.
             setEditingTransaction(null);
             setAddOpen(true);
           }}
+          onNewTransfer={() => setTransferOpen(true)}
         />
       )}
 
@@ -197,6 +200,18 @@ export function MainNavigator() {
         // al usuario a crear la primera.
         onOpenAccounts={() => {
           setAddOpen(false);
+          setDetail(null);
+          setActiveTab('accounts');
+        }}
+      />
+
+      <TransferModal
+        visible={transferOpen}
+        onClose={() => setTransferOpen(false)}
+        // Con menos de dos cuentas no hay entre qué transferir: se cierra y se
+        // lleva al usuario a crear la que falta.
+        onOpenAccounts={() => {
+          setTransferOpen(false);
           setDetail(null);
           setActiveTab('accounts');
         }}

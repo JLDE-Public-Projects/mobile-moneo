@@ -143,6 +143,34 @@ export default {
       addFailed: 'No pudimos registrar el movimiento.',
       updateFailed: 'No pudimos guardar los cambios.',
       removeFailed: 'No pudimos eliminar el movimiento.',
+      transferFailed: 'No pudimos hacer la transferencia.',
+    },
+    addMenu: {
+      newTransactionShort: 'Movimiento',
+      transferLabel: 'Transferencia',
+    },
+    transfer: {
+      label: 'Transferencia',
+      route: '{{from}} → {{to}}',
+      to: 'Hacia {{account}}',
+      from: 'Desde {{account}}',
+      deleteConfirmTitle: '¿Eliminar esta transferencia?',
+      deleteConfirmMessage: 'Se revierte en las dos cuentas.',
+      errorDelete: 'No pudimos eliminar la transferencia.',
+    },
+    transferModal: {
+      title: 'Transferir',
+      saving: 'Transfiriendo…',
+      from: 'Desde',
+      to: 'Hacia',
+      chooseAccount: 'Elegir cuenta',
+      swap: 'Invertir las cuentas',
+      available: 'Disponible {{amount}}',
+      sameAccountHint: 'Elige dos cuentas distintas.',
+      needsTwoAccounts: 'Necesitas al menos dos cuentas para transferir entre ellas.',
+      createAccount: 'Crear una cuenta',
+      save: 'Transferir',
+      errorSave: 'No pudimos hacer la transferencia. Inténtalo de nuevo.',
     },
   },
 
@@ -352,6 +380,7 @@ export default {
     clearSearch: 'Limpiar búsqueda',
     deleteKey: 'Borrar',
     newTransaction: 'Nuevo movimiento',
+    addMenu: 'Abrir menú para agregar',
   },
 
   transactionFilters: {
