@@ -9,7 +9,8 @@
     "ios": "expo run:ios",
     "ios:device": "expo run:ios --device",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:apk": "node scripts/build-apk.js"
   },
   "dependencies": {
     "@expo-google-fonts/sora": "^0.4.2",
